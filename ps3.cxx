@@ -1,0 +1,489 @@
+//	Author: Christopher Lee Jackson
+//	Course: CMPSC463
+//  Problem: 3-1
+//  Description:
+
+
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include <cassert>
+#include <algorithm>
+#include <vector>
+#include "Graph.h"
+#include <cmath>
+#include <cstring>
+
+using namespace std;
+
+typedef struct {
+	int data; // initial vertex ant started on
+	Vertex *location;
+	vector<int> *visited;
+}Ant;
+
+typedef struct {
+    int count;
+    vector<Edge> *edges;
+}Hub;
+
+typedef struct {
+	double low;
+	double high;
+	Edge *assocEdge;
+}Range;
+
+//	Globals
+const double P_UPDATE_EVAP = 0.95;
+const double P_UPDATE_ENHA = 1.05;
+const int TABU_MODIFIER = 5;
+
+double loopCount = 0;
+
+double evap_factor = 0.5;
+double enha_factor = 1.5;
+double maxCost = 0;
+double minCost = std::numeric_limits<double>::infinity();
+int cycles = 1;
+int totalCycles = 1;
+
+//	Prototypes
+void processFile(Graph *g, char* file);
+vector<Edge*> AB_DBMST(Graph *g, int d);
+vector<Edge*> treeConstruct(Graph *g, int d);
+bool asc_cmp_plevel(Edge *a, Edge *b);
+bool des_cmp_cost(Edge *a, Edge *b);
+bool asc_src(Edge *a, Edge *b);
+void move(Graph *g, Ant *a);
+void updatePheromonesPerEdge(Graph *g);
+void updatePheromonesGlobal(Graph *g, vector<Edge*> best, bool improved);
+void printEdge(Edge* e);
+int findRoot(Vertex* v, vector<int> uf);
+bool looping(Edge* e, vector<int> uf);
+
+int main( int argc, char *argv[])
+{
+    //  Process input from command line
+   // if (argc != 3) {
+  //      cerr << "Wrong input.\n";
+   // }
+    char* fileName = new char[50];
+    strcpy(fileName,argv[1]);
+    int d;
+    d = atoi(argv[2]);
+    //  Process input file and get resulting graph
+	Graph *g = new Graph();
+    processFile(g, fileName);
+	//g->print();
+	vector<Edge*> best = AB_DBMST(g, d);
+	sort(best.begin(), best.end(), asc_src); 
+	for_each(best.begin(), best.end(), printEdge);
+	return 0;
+}
+
+/*
+*
+*
+*	For Each, Sort - Helper Functions
+*
+*/
+bool asc_cmp_plevel(Edge *a, Edge *b) {
+	return (a->pLevel < b->pLevel);
+}
+
+bool des_cmp_cost(Edge *a, Edge *b) {
+	return (a->weight > b->weight);
+}
+
+bool asc_src(Edge* a, Edge* b) {
+	return (a->getSource(NULL)->data < b->getSource(NULL)->data);
+}
+
+void printEdge(Edge* e) {
+	cout << e->getSource(NULL)->data << " " << e->getDestination(NULL)->data << " " << e->weight << " " << e->pLevel << endl;
+}
+
+
+vector<Edge*> AB_DBMST(Graph *g, int d) {
+	//	Local Declerations
+	double bestCost = std::numeric_limits<double>::infinity();
+	double treeCost = 0;
+	const int s = 75;
+	vector<Edge*> best;
+	Vertex *vertWalkPtr;
+	Edge *edgeWalkPtr;
+	vector<Ant*> ants;
+	vector<Edge*>::iterator e;
+	vector<Edge*>::iterator ed;
+	Ant *a;
+	vector<Edge*> current;
+	//	Assign one ant to each vertex
+	vertWalkPtr = g->getFirst();
+	for (int i = 0; i < g->getCount(); i++) {
+		Ant *a = new Ant;
+		a->data = i +1;
+		a->location = vertWalkPtr;
+		a->visited = new vector<int>(g->getCount(), 0);
+		ants.push_back(a);
+		//	Initialize pheremone level of each edge, and set pUdatesNeeded to zero
+		for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
+			edgeWalkPtr = *e;
+			if (edgeWalkPtr->getSource(NULL) == vertWalkPtr) {
+				edgeWalkPtr->pUpdatesNeeded = 0;
+				edgeWalkPtr->pLevel = (maxCost - edgeWalkPtr->weight) + ((maxCost - minCost) / 3);
+			}
+		}
+		//	Done with this vertex's edges; move on to next vertex
+		vertWalkPtr = vertWalkPtr->pNextVert;
+	}
+	
+	while (totalCycles <= 10000 && cycles <= 2500) { 
+		if(totalCycles % 100 == 0) 
+			cerr << "CYCLE " << totalCycles << endl;
+		//	Exploration Stage
+		for (int step = 1; step <= s; step++) {
+			if (step == s/3 || step == (2*s)/3) {
+				updatePheromonesPerEdge(g);
+			}
+			for (int j = 0; j < g->getCount(); j++) {
+				a = ants[j];
+				move(g, a);
+			}
+            if ( step % TABU_MODIFIER == 0 ) {
+                for(int w = 0; w < g->getCount(); w++) {
+        			ants[w]->visited->assign(g->getCount(), 0); //  RESET VISITED FOR EACH ANT (TABU)
+        		}
+            }
+		}
+		for(int w = 0; w < g->getCount(); w++) {
+			ants[w]->visited->assign(g->getCount(), 0); //  RESET VISITED FOR EACH ANT
+		}
+		updatePheromonesPerEdge(g);
+		//	Tree Construction Stage
+		current = treeConstruct(g, d);
+		//	Get new tree cost
+		for ( ed = current.begin() ; ed < current.end(); ed++ ) {
+			edgeWalkPtr = *ed;
+			treeCost+=edgeWalkPtr->weight;
+		}
+		if (treeCost < bestCost) {
+			best = current;
+			bestCost = treeCost;
+			if (totalCycles != 1)
+				cycles = 0;
+		} 
+		if (cycles % 100 == 0) {
+			updatePheromonesGlobal(g, best, false);
+		} else {
+			updatePheromonesGlobal(g, best, true);
+		}
+		if (totalCycles % 500 == 0) {
+			evap_factor *= P_UPDATE_EVAP; 
+			enha_factor *= P_UPDATE_ENHA; 
+		}
+		totalCycles++;
+		cycles++;
+		treeCost = 0;
+	}
+    cout << "LINEAR RANDOM" << endl;
+    cout << "Cycles: " << totalCycles << endl;
+	cout << bestCost << endl;
+	return best;
+}
+
+void updatePheromonesGlobal(Graph *g, vector<Edge*> best, bool improved) {
+	//	Local Variables
+	srand((unsigned) time(NULL));
+	double pMax = 1000*((maxCost - minCost) + (maxCost - minCost) / 3);
+	double pMin = (maxCost - minCost)/3;
+	Edge *e;
+	double XMax = 0.3;
+	double XMin = 0.1;
+	double rand_evap_factor;
+	double IP;
+	//	For each edge in the best tree update pheromone levels
+	for (int i = 0; i < g->getCount() - 1; i++) {
+		e = best[i];
+		IP = (maxCost - e->weight) + ((maxCost - minCost) / 3);
+		if (improved) {
+			//	IMPROVEMENT so Apply Enhancement
+			e->pLevel = enha_factor*e->pLevel;
+		} else {
+			//	NO IMPROVEMENTS so Apply Evaporation
+			rand_evap_factor = XMin + rand() * (XMax - XMin) / RAND_MAX;
+			e->pLevel = rand_evap_factor*e->pLevel;
+		}
+		//	Check if fell below minCost or went above maxCost
+		if (e->pLevel > pMax) {
+			e->pLevel = pMax - IP;
+		} else if (e->pLevel < pMin) {
+			e->pLevel = pMin + IP;
+		}
+	}
+}
+
+void updatePheromonesPerEdge(Graph *g) {
+	//	Local Variables
+	Vertex *vertWalkPtr = g->getFirst();
+	double pMax = 1000*((maxCost - minCost) + (maxCost - minCost) / 3);
+	double pMin = (maxCost - minCost)/3;
+	double IP;
+	vector<Edge*>::iterator ex;
+	Edge *edgeWalkPtr;
+	
+	while (vertWalkPtr) {
+		for ( ex = vertWalkPtr->edges.begin() ; ex < vertWalkPtr->edges.end(); ex++ ) {
+			edgeWalkPtr = *ex;
+			if (edgeWalkPtr->getSource(NULL) == vertWalkPtr) {
+				IP = (maxCost - edgeWalkPtr->weight) + ((maxCost - minCost) / 3);
+				edgeWalkPtr->pLevel = (1 - evap_factor)*(edgeWalkPtr->pLevel)+(edgeWalkPtr->pUpdatesNeeded * IP);
+				if (edgeWalkPtr->pLevel > pMax) {
+					edgeWalkPtr->pLevel = pMax - IP;
+				} else if (edgeWalkPtr->pLevel < pMin) {
+					edgeWalkPtr->pLevel = pMin + IP;
+				}
+				//	Done updating this edge reset multiplier
+				edgeWalkPtr->pUpdatesNeeded = 0;
+			}
+		}
+		vertWalkPtr = vertWalkPtr->pNextVert;
+	}
+}
+
+vector<Edge*> treeConstruct(Graph *g, int d) {
+	//	Local Variables
+	double treeCost = 0;
+	vector<Edge*> v;
+	vector<Edge*> c;
+	Vertex *vertWalkPtr;
+	Edge *edgeWalkPtr;
+	int treeCount = 0;
+	vector<Edge*>::iterator ie;	
+	vector<Edge*>::iterator l;
+    Edge p;
+	Edge *e, *pEdge;
+    Hub *pHubs;
+    Hub *highHub = NULL;
+	vector<Edge*> tree;
+	vector<int> uf( g->getCount()+1 , 0 );
+	int sRoot, dRoot, v;
+	
+	//	Put all edges into a vector
+	vertWalkPtr = g->getFirst();
+	while (vertWalkPtr) {
+		vertWalkPtr->treeDegree = 0;
+		vertWalkPtr->inTree = false;
+		for ( ie = vertWalkPtr->edges.begin() ; ie < vertWalkPtr->edges.end(); ie++ ) {
+			edgeWalkPtr = *ie;
+			//	Dont want duplicate edges in listing
+			if (edgeWalkPtr->getSource(NULL) == vertWalkPtr) {
+				edgeWalkPtr->inTree = false;
+				v.push_back(edgeWalkPtr);
+			}
+		}
+		vertWalkPtr = vertWalkPtr->pNextVert;
+	}
+	//	Sort edges in ascending order based upon pheromone level
+	sort(v.begin(), v.end(), asc_cmp_plevel);
+	//	Select 5n edges from the end of v( the highest pheromones edges) and put them into c.
+	for (int i = 0; i < 5*g->getCount(); i++) {
+		if (v.empty()) {
+			break;
+		}
+		c.push_back(v.back());
+		v.pop_back();
+	}
+	//	Sort edges in descending order based upon cost
+	sort(c.begin(), c.end(), des_cmp_cost);
+
+    //  Create vector of Hubs
+    vector<Hub> *hubs = new vector<Hub>(g->getCount(), NULL);
+    for(h = hubs.begin(); h < hubs.end(); h++) {
+        hPtr = *h;
+        hPtr->count = 0;
+    }
+    //  Get Degree of each vertice in candidate set
+    for(p = c.begin(); p < c.end(); p++) {
+        pEdge = *p;
+        //  Handle Source
+        v = pEdge->getSource(NULL)->data; // the vertice number uniquely identifies each vertice
+        hubs[v]->count++;
+        hubs[v]->edges.push_back(pEdge);
+        //  Handle Destination
+        v = pEdge->getDestination(NULL)->data; // the vertice number uniquely identifies each vertice
+        hubs[v]->count++;
+        hubs[v]->edges.push_back(pEdge);
+    }
+    //  Get highest degree v to make our initial hub
+    highHub = hubs.begin();
+    for(p = hubs.begin() + 1; p < hubs.end(); p++) {
+        pHubs = *p;
+        if(pHubs->count > highHub->count) {
+            highHub = pHubs;
+        }
+    }
+    //  Add all edges in highHub to tree
+    for(p = highHub->edges.begin(); p < highHub->edges.end(); p++) {
+        pEdge = p;
+        tree.push_back(pEdge);
+    }
+
+    
+    
+    
+
+
+
+
+
+
+	//	Put lowest cost edge from candiate set in tree
+	e = c.back();
+	c.pop_back();
+	tree.push_back(e);
+	treeCost += e->weight;
+	e->inTree = true;
+	e->getDestination(NULL)->inTree = true;
+	e->getSource(NULL)->inTree = true;
+	e->getDestination(NULL)->treeDegree++;
+	e->getSource(NULL)->treeDegree++;
+	treeCount++;
+	uf[e->getSource(NULL)->data] = e->getSource(NULL)->data;
+	uf[e->getDestination(NULL)->data] = e->getSource(NULL)->data;
+	//	Find rest of edges in tree
+	while (treeCount != g->getCount()-1) {
+		if(!c.empty()) {
+			e = c.back();
+			c.pop_back();
+			if (!e->inTree && !looping(e, uf) && e->getDestination(NULL)->treeDegree < d && e->getSource(NULL)->treeDegree < d) {
+				//	We found an edge to add to current solution
+				treeCost += e->weight;
+				e->inTree = true;
+				e->getDestination(NULL)->inTree = true;
+				e->getSource(NULL)->inTree = true;
+				e->getDestination(NULL)->treeDegree++;
+				e->getSource(NULL)->treeDegree++;
+				tree.push_back(e);
+				treeCount++;
+				//	update uf vector
+				if( uf[e->getSource(NULL)->data] == 0 && uf[e->getDestination(NULL)->data] == 0) {
+					//	Both indicies are zero
+					uf[e->getSource(NULL)->data] = e->getSource(NULL)->data;
+					uf[e->getDestination(NULL)->data] = e->getSource(NULL)->data;
+				} else if (uf[e->getSource(NULL)->data] == 0 || uf[e->getDestination(NULL)->data] == 0) {
+					//	One of them is zero
+					if (uf[e->getSource(NULL)->data] == 0) {
+						uf[e->getSource(NULL)->data] = uf[e->getDestination(NULL)->data]; // added uf around right side
+					} else {
+						uf[e->getDestination(NULL)->data] = uf[e->getSource(NULL)->data]; // added uf around right side
+					}
+				} else {
+					//	They are both non zero
+					sRoot = findRoot(e->getSource(NULL), uf);
+					dRoot = findRoot(e->getDestination(NULL), uf);
+					uf[sRoot] = dRoot;
+				}
+			}
+		} else {
+			//	C is empty
+			for (int j = 0; j < 5*g->getCount(); j++) {
+			if (v.empty()) {
+				break;
+			}
+				c.push_back(v.back());
+				v.pop_back();
+			}
+			sort(c.begin(), c.end(), des_cmp_cost);
+		}
+	}
+	return tree;
+}
+					  
+int findRoot(Vertex* v, vector<int> uf) {
+	// find the root 
+	int index = v->data;
+	int sourceRoot = uf[index];
+	while (sourceRoot != index) {
+		index = sourceRoot;
+		sourceRoot =uf[sourceRoot];
+	}
+	return index;
+}
+					  
+bool looping(Edge* e, vector<int> uf) {
+	if (uf[findRoot(e->getDestination(NULL), uf)] == uf[findRoot(e->getSource(NULL), uf)] && uf[findRoot(e->getSource(NULL), uf)] != 0) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+void move(Graph *g, Ant *a) {
+	Vertex* vertWalkPtr;
+	vertWalkPtr = a->location;
+	Edge* edgeWalkPtr;
+	int numMoves = 0;
+	vector<Edge*>::iterator e;
+	double sum = 0.0;
+	vector<Range> edges;
+	double value;
+	Range* current;
+	vector<int> v = *a->visited;
+	//	Determine Ranges for each edge
+	for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
+		edgeWalkPtr = *e;
+		Range r;
+		r.assocEdge = edgeWalkPtr;
+		r.low = sum;
+		sum += edgeWalkPtr->pLevel + g->getVerticeWeight(edgeWalkPtr->getDestination(vertWalkPtr)); // changed to include destination weight
+		r.high = sum;
+		edges.push_back(r);
+	}
+	while (numMoves < 5) {
+		//	Select an edge at random and proportional to its pheremone level
+		value = fmod(rand(),(sum+1));
+		for (unsigned int i = 0; i < edges.size(); i++) {
+			current = &edges[i];
+			if (value >= current->low && value < current->high) {
+				//	We will use this edge
+				edgeWalkPtr = current->assocEdge;
+				break;
+			}
+		}
+		//	We have a randomly selected edge, if that edges hasnt already been visited by this ant
+		if (v[edgeWalkPtr->getDestination(vertWalkPtr)->data] == 0) {
+			edgeWalkPtr->pUpdatesNeeded++;
+			a->location = edgeWalkPtr->getDestination(vertWalkPtr);
+			v[edgeWalkPtr->getDestination(vertWalkPtr)->data] = 1; 
+			break;
+		} else {
+			numMoves++;
+		}
+	}
+}
+ 
+void processFile(Graph *g, char* fileName) {
+    //  Open file for reading
+    ifstream inFile;
+    inFile.open(fileName);
+    assert(inFile.is_open());
+    int eCount, vCount;
+    int i, j;
+    double cost;
+    //  Create each vertex after getting vertex count
+    inFile >> vCount;
+    for(int i = 1; i <= vCount; i++) {
+        g->insertVertex(i);
+    }
+    //  Create each edge after processing edge count
+    eCount = vCount*(vCount-1)/2;
+    for(int e = 0; e < eCount; e++) {
+        inFile >> i >> j >> cost;
+        g->insertEdge(i, j, cost);
+		if (cost > maxCost)
+			maxCost = cost;
+		if (cost < minCost)
+			minCost = cost;
+    }
+}
