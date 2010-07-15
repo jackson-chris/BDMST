@@ -23,7 +23,6 @@ typedef struct {
 }Ant;
 
 typedef struct {
-    int count;
     vector<Edge> *edges;
 }Hub;
 
@@ -251,153 +250,124 @@ void updatePheromonesPerEdge(Graph *g) {
 }
 
 vector<Edge*> treeConstruct(Graph *g, int d) {
-	//	Local Variables
-	double treeCost = 0;
-	vector<Edge*> v;
-	vector<Edge*> c;
-	Vertex *vertWalkPtr;
-	Edge *edgeWalkPtr;
-	int treeCount = 0;
-	vector<Edge*>::iterator ie;	
-	vector<Edge*>::iterator l;
+    //	Local Variables
+    double treeCost = 0;
+    vector<Edge*> v;
+    vector<Edge*> c;
+    Vertex *vertWalkPtr;
+    Edge *edgeWalkPtr;
+    int treeCount = 0;
+    vector<Edge*>::iterator ie;	
+    vector<Edge*>::iterator l;
     Edge p;
-	Edge *e, *pEdge;
+    Edge *e, *pEdge;
     Hub *pHubs;
     Hub *highHub = NULL;
-	vector<Edge*> tree;
-	vector<int> uf( g->getCount()+1 , 0 );
-	int sRoot, dRoot, v;
-	
-	//	Put all edges into a vector
-	vertWalkPtr = g->getFirst();
-	while (vertWalkPtr) {
-		vertWalkPtr->treeDegree = 0;
-		vertWalkPtr->inTree = false;
-		for ( ie = vertWalkPtr->edges.begin() ; ie < vertWalkPtr->edges.end(); ie++ ) {
-			edgeWalkPtr = *ie;
-			//	Dont want duplicate edges in listing
-			if (edgeWalkPtr->getSource(NULL) == vertWalkPtr) {
-				edgeWalkPtr->inTree = false;
-				v.push_back(edgeWalkPtr);
-			}
-		}
-		vertWalkPtr = vertWalkPtr->pNextVert;
-	}
-	//	Sort edges in ascending order based upon pheromone level
-	sort(v.begin(), v.end(), asc_cmp_plevel);
-	//	Select 5n edges from the end of v( the highest pheromones edges) and put them into c.
-	for (int i = 0; i < 5*g->getCount(); i++) {
-		if (v.empty()) {
-			break;
-		}
-		c.push_back(v.back());
-		v.pop_back();
-	}
-	//	Sort edges in descending order based upon cost
-	sort(c.begin(), c.end(), des_cmp_cost);
+    vector<Edge*> tree;
+    vector<int> uf( g->getCount()+1 , 0 );
+    int sRoot, dRoot, v;
 
-    //  Create vector of Hubs
-    vector<Hub> *hubs = new vector<Hub>(g->getCount(), NULL);
-    for(h = hubs.begin(); h < hubs.end(); h++) {
-        hPtr = *h;
-        hPtr->count = 0;
-    }
-    //  Get Degree of each vertice in candidate set
-    for(p = c.begin(); p < c.end(); p++) {
-        pEdge = *p;
-        //  Handle Source
-        v = pEdge->getSource(NULL)->data; // the vertice number uniquely identifies each vertice
-        hubs[v]->count++;
-        hubs[v]->edges.push_back(pEdge);
-        //  Handle Destination
-        v = pEdge->getDestination(NULL)->data; // the vertice number uniquely identifies each vertice
-        hubs[v]->count++;
-        hubs[v]->edges.push_back(pEdge);
-    }
-    //  Get highest degree v to make our initial hub
-    highHub = hubs.begin();
-    for(p = hubs.begin() + 1; p < hubs.end(); p++) {
-        pHubs = *p;
-        if(pHubs->count > highHub->count) {
-            highHub = pHubs;
+    //	Put all edges into a vector
+    vertWalkPtr = g->getFirst();
+    while (vertWalkPtr) {
+        vertWalkPtr->treeDegree = 0;
+        vertWalkPtr->inTree = false;
+        for ( ie = vertWalkPtr->edges.begin() ; ie < vertWalkPtr->edges.end(); ie++ ) {
+            edgeWalkPtr = *ie;
+            //	Dont want duplicate edges in listing
+            if (edgeWalkPtr->getSource(NULL) == vertWalkPtr) {
+                edgeWalkPtr->inTree = false;
+                v.push_back(edgeWalkPtr);
+            }
         }
+        vertWalkPtr = vertWalkPtr->pNextVert;
     }
-    //  Add all edges in highHub to tree
-    for(p = highHub->edges.begin(); p < highHub->edges.end(); p++) {
-        pEdge = p;
-        tree.push_back(pEdge);
+    //	Sort edges in ascending order based upon pheromone level
+    sort(v.begin(), v.end(), asc_cmp_plevel);
+    //	Select 5n edges from the end of v( the highest pheromones edges) and put them into c.
+    for (int i = 0; i < 5*g->getCount(); i++) {
+        if (v.empty()) {
+            break;
+        }
+        c.push_back(v.back());
+        v.pop_back();
     }
-
-    
-    
-    
-
-
-
-
-
-
-	//	Put lowest cost edge from candiate set in tree
-	e = c.back();
-	c.pop_back();
-	tree.push_back(e);
-	treeCost += e->weight;
-	e->inTree = true;
-	e->getDestination(NULL)->inTree = true;
-	e->getSource(NULL)->inTree = true;
-	e->getDestination(NULL)->treeDegree++;
-	e->getSource(NULL)->treeDegree++;
-	treeCount++;
-	uf[e->getSource(NULL)->data] = e->getSource(NULL)->data;
-	uf[e->getDestination(NULL)->data] = e->getSource(NULL)->data;
-	//	Find rest of edges in tree
-	while (treeCount != g->getCount()-1) {
-		if(!c.empty()) {
-			e = c.back();
-			c.pop_back();
-			if (!e->inTree && !looping(e, uf) && e->getDestination(NULL)->treeDegree < d && e->getSource(NULL)->treeDegree < d) {
-				//	We found an edge to add to current solution
-				treeCost += e->weight;
-				e->inTree = true;
-				e->getDestination(NULL)->inTree = true;
-				e->getSource(NULL)->inTree = true;
-				e->getDestination(NULL)->treeDegree++;
-				e->getSource(NULL)->treeDegree++;
-				tree.push_back(e);
-				treeCount++;
-				//	update uf vector
-				if( uf[e->getSource(NULL)->data] == 0 && uf[e->getDestination(NULL)->data] == 0) {
-					//	Both indicies are zero
-					uf[e->getSource(NULL)->data] = e->getSource(NULL)->data;
-					uf[e->getDestination(NULL)->data] = e->getSource(NULL)->data;
-				} else if (uf[e->getSource(NULL)->data] == 0 || uf[e->getDestination(NULL)->data] == 0) {
-					//	One of them is zero
-					if (uf[e->getSource(NULL)->data] == 0) {
-						uf[e->getSource(NULL)->data] = uf[e->getDestination(NULL)->data]; // added uf around right side
-					} else {
-						uf[e->getDestination(NULL)->data] = uf[e->getSource(NULL)->data]; // added uf around right side
-					}
-				} else {
-					//	They are both non zero
-					sRoot = findRoot(e->getSource(NULL), uf);
-					dRoot = findRoot(e->getDestination(NULL), uf);
-					uf[sRoot] = dRoot;
-				}
-			}
-		} else {
-			//	C is empty
-			for (int j = 0; j < 5*g->getCount(); j++) {
-			if (v.empty()) {
-				break;
-			}
-				c.push_back(v.back());
-				v.pop_back();
-			}
-			sort(c.begin(), c.end(), des_cmp_cost);
-		}
-	}
-	return tree;
-}
+    //	Sort edges in descending order based upon cost
+    sort(c.begin(), c.end(), des_cmp_cost);
+    //  Now Create tree until complete
+    while(treeCount != g->getCount() - 1) {
+        if(!c.isEmpty()){
+        //  Create vector of Hubs
+            vector<Hub> *hubs = new vector<Hub>(g->getCount(), NULL);
+            for(h = hubs.begin(); h < hubs.end(); h++) {
+                hPtr = *h;
+                hPtr->count = 0;
+            }
+            //  Get Degree of each vertice in candidate set
+            for(p = c.begin(); p < c.end(); p++) {
+                pEdge = *p;
+                //  Handle Source
+                v = pEdge->getSource(NULL)->data; // the vertice number uniquely identifies each vertice
+                hubs[v]->count++;
+                hubs[v]->edges.push_back(pEdge);
+                //  Handle Destination
+                v = pEdge->getDestination(NULL)->data; // the vertice number uniquely identifies each vertice
+                hubs[v]->count++;
+                hubs[v]->edges.push_back(pEdge);
+            }
+            //  Put Potential hubs in to heap
+            Hub* pHub;
+            vector<Hub>* possVerts = new vector<Hub>();
+            //  First get rid of vertices with zero edges from candidate set
+            for(p1 = hubs.begin(); p1 < hubs.end(); p1++) {
+                pHub = *p1;
+                if(pHub->edges->getCount() != 0) {
+                    possVerts.pushBack(pHub)
+                    }
+                }
+                BinaryHeap* heap = new BinaryHeap( possVerts );
+                //  Get highest degree v to make our initial hub (should be top of heap)
+                highHub = heap->deleteMax();
+                //  Add all edges in highHub to tree
+                Edge* pE;
+                Hub* h;
+                for(p = highHub->edges.begin(); p < highHub->edges.end(); p++) {
+                    pEdge = *p;
+                    tree.push_back(pEdge);
+                    treeCount++;
+                    // Update Source Vertex
+                    h = hubs[pEdge->getSource(NULL)->data];
+                    for(p2 = h->edges.begin() + 1; p2 < h->edges.end(); p2++) {
+                        pE = *p2;
+                        if(pE->getDestination(NULL)->inTree == true && pE->getSource(NULL)->inTree == true) {
+                            h->edges.erase(p2);
+                        }
+                    }
+                    //Update Destination
+                    h = hubs[pEdge->getDestination(NULL)->data];
+                    for(p2 = h->edges.begin() + 1; p2 < h->edges.end(); p2++) {
+                        pE = *p2;
+                        if(pE->getDestination(NULL)->inTree == true && pE->getSource(NULL)->inTree == true) {
+                            h->edges.erase(p2);
+                        }
+                    }
+                }
+                //  Update Heap
+                heap->updateHeap();
+            } else {
+                //	C is empty
+                for (int j = 0; j < 5*g->getCount(); j++) {
+                    if (v.empty()) {
+                        break;
+                    }
+                    c.push_back(v.back());
+                    v.pop_back();
+                }
+                sort(c.begin(), c.end(), des_cmp_cost);
+            }
+        }
+        return tree;
+    }
 					  
 int findRoot(Vertex* v, vector<int> uf) {
 	// find the root 
