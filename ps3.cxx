@@ -45,6 +45,7 @@ int totalCycles = 1;
 
 //	Prototypes
 void processFile(Graph *g, char* file);
+void processFileOld(Graph *g, char* file);
 vector<Edge*> AB_DBMST(Graph *g, int d);
 vector<Edge*> treeConstruct(Graph *g, int d);
 bool asc_cmp_plevel(Edge *a, Edge *b);
@@ -70,7 +71,7 @@ int main( int argc, char *argv[])
     //  Process input file and get resulting graph
 	Graph *g = new Graph();
     processFile(g, fileName);
-	//g->print();
+	g->print();
 	vector<Edge*> best = AB_DBMST(g, d);
 	sort(best.begin(), best.end(), asc_src); 
 	for_each(best.begin(), best.end(), printEdge);
@@ -293,6 +294,8 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     }
     //	Sort edges in descending order based upon cost
     sort(c.begin(), c.end(), des_cmp_cost);
+    
+    
     //  Now Create tree until complete
     while(treeCount != g->getCount() - 1) {
         if(!c.empty()){
@@ -300,16 +303,22 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 			for(unsigned int index = 0; index < g->getCount(); index++) {
 				hubs.push_back(new Hub());
 			}
+			for(unsigned int index = 0; index < g->getCount(); index++) {
+                cout << "Vert " << index << " size: " << hubs[index]->edges.size() << endl;
+			}
             //  Get Degree of each vertice in candidate set
             for(iedge1 = c.begin(); iedge1 < c.end(); iedge1++) {
                 pEdge = *iedge1;
                 //  Handle Source
                 vertIndex = pEdge->getSource(NULL)->data; // the vertice number uniquely identifies each vertice
-                hubs[vertIndex]->edges.push_back(pEdge);
+                hubs[vertIndex - 1]->edges.push_back(pEdge);
                 //  Handle Destination
                 vertIndex = pEdge->getDestination(NULL)->data; // the vertice number uniquely identifies each vertice
-                hubs[vertIndex]->edges.push_back(pEdge);
+                cout << "index: " << vertIndex << endl;
+                cout << "# edges at index " << hubs[vertIndex - 1]->edges.size() << endl;
+                hubs[vertIndex - 1]->edges.push_back(pEdge);
             }
+            cout << "OUT OF LOOP\n";
             //  Put Potential hubs in to heap
             //  First get rid of vertices with zero edges from candidate set
             for(ihubs2 = hubs.begin(); ihubs2 < hubs.end(); ihubs2++) {
@@ -424,7 +433,7 @@ void move(Graph *g, Ant *a) {
 	}
 }
  
-void processFile(Graph *g, char* fileName) {
+void processFileOld(Graph *g, char* fileName) {
     //  Open file for reading
     ifstream inFile;
     inFile.open(fileName);
@@ -447,4 +456,30 @@ void processFile(Graph *g, char* fileName) {
 		if (cost < minCost)
 			minCost = cost;
     }
+}
+
+void processFile(Graph *g, char* fileName) {
+    double x,y,cost;
+    //  Open file for reading  
+    ifstream inFile;
+    inFile.open(fileName);
+    assert(inFile.is_open());
+    int eCount, vCount;
+    //  Create each vertex after getting vertex count
+    inFile >> vCount;
+    for(int i = 1; i <= vCount; i++) {
+    	inFile >> x >> y;
+        g->insertVertex(i, x, y);
+    }
+    //  Create each edge after processing edge count
+    eCount = vCount*(vCount-1)/2;
+    for(int v1 = 1; v1<= vCount; v1++) {
+    	for(int j = 1; v1 + j<= vCount; j++){
+        	cost = g->insertEdge(v1, v1 + j);
+			if (cost > maxCost)
+				maxCost = cost;
+			if (cost < minCost)
+				minCost = cost;
+    	}
+	}
 }

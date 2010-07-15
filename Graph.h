@@ -9,6 +9,8 @@
 #include <limits>
 #include <iostream>
 #include <vector>
+#include <math.h>
+#include <cmath>
 
 
 using namespace std;
@@ -37,6 +39,8 @@ public:
 	int treeDegree;
 	int visited;
 	bool inTree;
+	
+	double x_coord, y_coord;
 };	//	END VERTEX
 
 
@@ -108,6 +112,8 @@ public:
     int insertVertex(int dataIn);
     int deleteVertex(int dltKey);
     int insertEdge (int fromKey, int toKey, double weight);
+    double insertEdge(int fromKey, int toKey);
+    int insertVertex(int dataIn, double x, double y);
     bool emptyGraph();
     unsigned int getCount();
 	void print();
@@ -185,6 +191,46 @@ int Graph::insertVertex(int dataIn) {
     return 1;
 }
 
+int Graph::insertVertex(int dataIn, double x, double y) {
+	Vertex *newPtr;
+    Vertex *locPtr;
+    Vertex *predPtr;
+    newPtr = new Vertex;
+    if(newPtr) {
+        newPtr->pNextVert = NULL;
+        newPtr->data = dataIn;
+        newPtr->degree = 0;
+        newPtr->visited = 0;
+        newPtr->x_coord = x;
+        newPtr->y_coord = y;
+       // newPtr->edges = new vector<Edge*>;
+        count++;
+    } else {
+        //  Memory overflow
+        return -1;
+    }
+    locPtr = first;
+    if(!locPtr) {
+        //  Inserting into empty graph
+        first = newPtr;
+    } else {
+        predPtr = NULL;
+        while(locPtr && dataIn > (locPtr->data)) {
+            predPtr = locPtr;
+            locPtr = locPtr->pNextVert;
+        }
+        if (!predPtr) {
+            //  insert before fist vertex
+            first = newPtr;
+        } else {
+            predPtr->pNextVert = newPtr;
+        }
+        newPtr->pNextVert = locPtr;
+    }
+    return 1;
+}
+
+
 /*
  Delete an existing vertex only if its degree is 0.
  */
@@ -259,6 +305,49 @@ int Graph::insertEdge(int fromKey, int toKey, double weight) {
 	vertFromPtr->edges.push_back(newPtr);
 	return 1;
 }
+
+double Graph::insertEdge(int fromKey, int toKey) {
+    Edge *newPtr;
+	
+	double weight;
+	
+    Vertex *vertFromPtr;
+    Vertex *vertToPtr;
+    
+    newPtr = new Edge;
+
+    if(!newPtr) {
+        return (-1);
+    }
+    //  Find source vertex
+    vertFromPtr = first;
+    while(vertFromPtr && fromKey > (vertFromPtr->data)) {
+        vertFromPtr = vertFromPtr->pNextVert;
+    }
+    if(!vertFromPtr || fromKey != (vertFromPtr->data)) {
+        return (-2);
+    }
+    //  Find destination vertex
+    vertToPtr = first;
+    while(vertToPtr && toKey > (vertToPtr->data)) {
+        vertToPtr = vertToPtr->pNextVert;
+    }
+    if(!vertToPtr || toKey != (vertToPtr->data)) {
+        return (-3);
+    }
+    //  Found verticies. Make edge.
+    newPtr->weight = sqrt((((vertFromPtr->x_coord - vertToPtr->x_coord) * (vertFromPtr->x_coord - vertToPtr->x_coord)) 
+    	+ ((vertFromPtr->y_coord - vertToPtr->y_coord) * (vertFromPtr->y_coord - vertToPtr->y_coord))));
+    ++vertFromPtr->degree;
+    ++vertToPtr->degree;
+    newPtr->setDestination(vertToPtr);
+	newPtr->setSource(vertFromPtr);
+	//	Add edges to each adjacency list
+	vertToPtr->edges.push_back(newPtr);
+	vertFromPtr->edges.push_back(newPtr);
+	return weight;
+}
+
 
 unsigned int Graph::getCount() {
     return count;
