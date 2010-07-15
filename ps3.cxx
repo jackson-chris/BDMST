@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <vector>
 #include "Graph.h"
+#include "BinaryHeap.h"
 #include <cmath>
 #include <cstring>
 
@@ -21,10 +22,6 @@ typedef struct {
 	Vertex *location;
 	vector<int> *visited;
 }Ant;
-
-typedef struct {
-    vector<Edge> *edges;
-}Hub;
 
 typedef struct {
 	double low;
@@ -251,21 +248,19 @@ void updatePheromonesPerEdge(Graph *g) {
 
 vector<Edge*> treeConstruct(Graph *g, int d) {
     //	Local Variables
-    double treeCost = 0;
     vector<Edge*> v;
     vector<Edge*> c;
     Vertex *vertWalkPtr;
     Edge *edgeWalkPtr;
     int treeCount = 0;
-    vector<Edge*>::iterator ie;	
-    vector<Edge*>::iterator l;
-    Edge p;
-    Edge *e, *pEdge;
-    Hub *pHubs;
+    vector<Edge*>::iterator iedge1;
+	vector<Edge*>::iterator iedge2;
+	vector<Edge*>::iterator ie;
+	vector<Edge*>::iterator ihubs1;
+    Edge *pEdge;
     Hub *highHub = NULL;
     vector<Edge*> tree;
     vector<int> uf( g->getCount()+1 , 0 );
-    int sRoot, dRoot, v;
 
     //	Put all edges into a vector
     vertWalkPtr = g->getFirst();
@@ -296,16 +291,16 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     sort(c.begin(), c.end(), des_cmp_cost);
     //  Now Create tree until complete
     while(treeCount != g->getCount() - 1) {
-        if(!c.isEmpty()){
+        if(!c.empty()){
         //  Create vector of Hubs
             vector<Hub> *hubs = new vector<Hub>(g->getCount(), NULL);
-            for(h = hubs.begin(); h < hubs.end(); h++) {
-                hPtr = *h;
+            for(ihubs1 = hubs->begin(); ihubs1 < hubs->end(); ihubs1++) {
+                hPtr = *ihubs1;
                 hPtr->count = 0;
             }
             //  Get Degree of each vertice in candidate set
-            for(p = c.begin(); p < c.end(); p++) {
-                pEdge = *p;
+            for(iedge1 = c.begin(); iedge1 < c.end(); iedge1++) {
+                pEdge = *iedge1;
                 //  Handle Source
                 v = pEdge->getSource(NULL)->data; // the vertice number uniquely identifies each vertice
                 hubs[v]->count++;
@@ -319,8 +314,8 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
             Hub* pHub;
             vector<Hub>* possVerts = new vector<Hub>();
             //  First get rid of vertices with zero edges from candidate set
-            for(p1 = hubs.begin(); p1 < hubs.end(); p1++) {
-                pHub = *p1;
+            for(ihubs2 = hubs->begin(); ihubs2 < hubs->end(); ihubs2++) {
+                pHub = *ihubs2;
                 if(pHub->edges->getCount() != 0) {
                     possVerts.pushBack(pHub)
                     }
@@ -331,24 +326,24 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
                 //  Add all edges in highHub to tree
                 Edge* pE;
                 Hub* h;
-                for(p = highHub->edges.begin(); p < highHub->edges.end(); p++) {
-                    pEdge = *p;
+                for(iedge1 = highHub->edges.begin(); iedge1 < highHub->edges.end(); iedge1++) {
+                    pEdge = *iedge1;
                     tree.push_back(pEdge);
                     treeCount++;
                     // Update Source Vertex
                     h = hubs[pEdge->getSource(NULL)->data];
-                    for(p2 = h->edges.begin() + 1; p2 < h->edges.end(); p2++) {
-                        pE = *p2;
+                    for(iedge2 = h->edges.begin() + 1; iedge2 < h->edges.end(); iedge2++) {
+                        pE = *iedge2;
                         if(pE->getDestination(NULL)->inTree == true && pE->getSource(NULL)->inTree == true) {
-                            h->edges.erase(p2);
+                            h->edges.erase(iedge2);
                         }
                     }
                     //Update Destination
                     h = hubs[pEdge->getDestination(NULL)->data];
-                    for(p2 = h->edges.begin() + 1; p2 < h->edges.end(); p2++) {
-                        pE = *p2;
+                    for(iedge2 = h->edges.begin() + 1; iedge2 < h->edges.end(); iedge2++) {
+                        pE = *iedge2;
                         if(pE->getDestination(NULL)->inTree == true && pE->getSource(NULL)->inTree == true) {
-                            h->edges.erase(p2);
+                            h->edges.erase(iedge2);
                         }
                     }
                 }

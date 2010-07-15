@@ -15,7 +15,7 @@ public:
 	explicit BinaryHeap (const vector<int> &items );
 	
 	bool isEmpty() const;
-	vector<int> deleteMax();
+	int deleteMax();
     void updateHeap();
 private:
 	int currentSize; // Number of elements in heap
@@ -30,8 +30,8 @@ bool BinaryHeap::isEmpty() const{
     return false;
 }
 
-vector<int> BinaryHeap::deleteMax() {
-    vector<int>* temp;
+int BinaryHeap::deleteMax() {
+    int temp;
     if( isEmpty())
         throw UnderflowException();
     temp = array[1];
@@ -45,7 +45,7 @@ void BinaryHeap::percolateDown(int hole) {
     int tmp = array[hole];
     for( ; hole * 2 <= currentSize; hole = child) {
         child = hole * 2;
-        if( child != currentSize && array[child+1]> array[child])
+        if( child != currentSize && array[child+1] > array[child])
             child++;
         if( array[child] > tmp)
             array[hole] = array[child];

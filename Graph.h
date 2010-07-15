@@ -13,6 +13,7 @@ class Edge;
 class Hub;
 
 class Hub {
+public:
     vector<Edge> *edges;
 };
 
@@ -122,7 +123,7 @@ Graph::~Graph() {
 double Graph::getVerticeWeight(Vertex *vertPtr) {
     double sum  = 0.0;
     Edge* edgeWalkPtr;
-    Edge* e;
+    vector<Edge*>::iterator e;
     for ( e = vertPtr->edges.begin(); e < vertPtr->edges.end(); e++ ) {
 		edgeWalkPtr = *e;
         sum += edgeWalkPtr->pLevel;
