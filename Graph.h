@@ -1,6 +1,11 @@
 //  Author: Christopher Lee Jackson
 //  Course: CMPMSC 463 - Spring 10
 
+
+#ifndef __GRAPH_H_INCLUDED__  
+#define __GRAPH_H_INCLUDED__  
+
+
 #include <limits>
 #include <iostream>
 #include <vector>
@@ -14,7 +19,7 @@ class Hub;
 
 class Hub {
 public:
-    vector<Edge> *edges;
+    vector<Edge*> edges;
 };
 
 /*
@@ -94,7 +99,7 @@ Vertex* Edge::getDestination(Vertex* loc) {
 
 class Graph{
 private:
-    int count;
+    unsigned int count;
     Vertex *first;
 	
 public:
@@ -104,7 +109,7 @@ public:
     int deleteVertex(int dltKey);
     int insertEdge (int fromKey, int toKey, double weight);
     bool emptyGraph();
-    int getCount();
+    unsigned int getCount();
 	void print();
     void search(Vertex *vertPtr);
 	Vertex* getFirst();
@@ -255,7 +260,7 @@ int Graph::insertEdge(int fromKey, int toKey, double weight) {
 	return 1;
 }
 
-int Graph::getCount() {
+unsigned int Graph::getCount() {
     return count;
 }
 
@@ -296,3 +301,5 @@ void Graph::search(Vertex *vertPtr) {
 		}
 	}
 }	//	END GRAPH
+
+#endif

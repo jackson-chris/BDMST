@@ -115,7 +115,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 	vector<Edge*> current;
 	//	Assign one ant to each vertex
 	vertWalkPtr = g->getFirst();
-	for (int i = 0; i < g->getCount(); i++) {
+	for (unsigned int i = 0; i < g->getCount(); i++) {
 		Ant *a = new Ant;
 		a->data = i +1;
 		a->location = vertWalkPtr;
@@ -141,17 +141,17 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 			if (step == s/3 || step == (2*s)/3) {
 				updatePheromonesPerEdge(g);
 			}
-			for (int j = 0; j < g->getCount(); j++) {
+			for (unsigned int j = 0; j < g->getCount(); j++) {
 				a = ants[j];
 				move(g, a);
 			}
             if ( step % TABU_MODIFIER == 0 ) {
-                for(int w = 0; w < g->getCount(); w++) {
+                for(unsigned int w = 0; w < g->getCount(); w++) {
         			ants[w]->visited->assign(g->getCount(), 0); //  RESET VISITED FOR EACH ANT (TABU)
         		}
             }
 		}
-		for(int w = 0; w < g->getCount(); w++) {
+		for(unsigned int w = 0; w < g->getCount(); w++) {
 			ants[w]->visited->assign(g->getCount(), 0); //  RESET VISITED FOR EACH ANT
 		}
 		updatePheromonesPerEdge(g);
@@ -198,7 +198,7 @@ void updatePheromonesGlobal(Graph *g, vector<Edge*> best, bool improved) {
 	double rand_evap_factor;
 	double IP;
 	//	For each edge in the best tree update pheromone levels
-	for (int i = 0; i < g->getCount() - 1; i++) {
+	for (unsigned int i = 0; i < g->getCount() - 1; i++) {
 		e = best[i];
 		IP = (maxCost - e->weight) + ((maxCost - minCost) / 3);
 		if (improved) {
@@ -250,16 +250,20 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     //	Local Variables
     vector<Edge*> v;
     vector<Edge*> c;
+	vector<Hub*> hubs;
+	vector<Edge*> tree;
     Vertex *vertWalkPtr;
-    Edge *edgeWalkPtr;
-    int treeCount = 0;
+	vector<Hub*> possVerts;
+	Hub *pHub, *h;
+	Edge *pE, *pEdge, *edgeWalkPtr;
+	int vertIndex;
+    unsigned int treeCount = 0;
     vector<Edge*>::iterator iedge1;
 	vector<Edge*>::iterator iedge2;
 	vector<Edge*>::iterator ie;
-	vector<Edge*>::iterator ihubs1;
-    Edge *pEdge;
+	vector<Hub*>::iterator ihubs1;
+	vector<Hub*>::iterator ihubs2;
     Hub *highHub = NULL;
-    vector<Edge*> tree;
     vector<int> uf( g->getCount()+1 , 0 );
 
     //	Put all edges into a vector
@@ -280,7 +284,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     //	Sort edges in ascending order based upon pheromone level
     sort(v.begin(), v.end(), asc_cmp_plevel);
     //	Select 5n edges from the end of v( the highest pheromones edges) and put them into c.
-    for (int i = 0; i < 5*g->getCount(); i++) {
+    for (unsigned int i = 0; i < 5*g->getCount(); i++) {
         if (v.empty()) {
             break;
         }
@@ -292,40 +296,32 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     //  Now Create tree until complete
     while(treeCount != g->getCount() - 1) {
         if(!c.empty()){
-        //  Create vector of Hubs
-            vector<Hub> *hubs = new vector<Hub>(g->getCount(), NULL);
-            for(ihubs1 = hubs->begin(); ihubs1 < hubs->end(); ihubs1++) {
-                hPtr = *ihubs1;
-                hPtr->count = 0;
-            }
+        //  Fill vector of Hubs
+			for(unsigned int index = 0; index < g->getCount(); index++) {
+				hubs.push_back(new Hub());
+			}
             //  Get Degree of each vertice in candidate set
             for(iedge1 = c.begin(); iedge1 < c.end(); iedge1++) {
                 pEdge = *iedge1;
                 //  Handle Source
-                v = pEdge->getSource(NULL)->data; // the vertice number uniquely identifies each vertice
-                hubs[v]->count++;
-                hubs[v]->edges.push_back(pEdge);
+                vertIndex = pEdge->getSource(NULL)->data; // the vertice number uniquely identifies each vertice
+                hubs[vertIndex]->edges.push_back(pEdge);
                 //  Handle Destination
-                v = pEdge->getDestination(NULL)->data; // the vertice number uniquely identifies each vertice
-                hubs[v]->count++;
-                hubs[v]->edges.push_back(pEdge);
+                vertIndex = pEdge->getDestination(NULL)->data; // the vertice number uniquely identifies each vertice
+                hubs[vertIndex]->edges.push_back(pEdge);
             }
             //  Put Potential hubs in to heap
-            Hub* pHub;
-            vector<Hub>* possVerts = new vector<Hub>();
             //  First get rid of vertices with zero edges from candidate set
-            for(ihubs2 = hubs->begin(); ihubs2 < hubs->end(); ihubs2++) {
+            for(ihubs2 = hubs.begin(); ihubs2 < hubs.end(); ihubs2++) {
                 pHub = *ihubs2;
-                if(pHub->edges->getCount() != 0) {
-                    possVerts.pushBack(pHub)
+                if(pHub->edges.size() != 0) {
+					possVerts.push_back(pHub);
                     }
                 }
                 BinaryHeap* heap = new BinaryHeap( possVerts );
                 //  Get highest degree v to make our initial hub (should be top of heap)
                 highHub = heap->deleteMax();
                 //  Add all edges in highHub to tree
-                Edge* pE;
-                Hub* h;
                 for(iedge1 = highHub->edges.begin(); iedge1 < highHub->edges.end(); iedge1++) {
                     pEdge = *iedge1;
                     tree.push_back(pEdge);
@@ -351,7 +347,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
                 heap->updateHeap();
             } else {
                 //	C is empty
-                for (int j = 0; j < 5*g->getCount(); j++) {
+                for (unsigned int j = 0; j < 5*g->getCount(); j++) {
                     if (v.empty()) {
                         break;
                     }
