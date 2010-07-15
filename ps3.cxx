@@ -1,4 +1,4 @@
-//	Author: Christopher Lee Jackson
+//	Author: Christopher Lee Jackson & Jason Jones
 //	Course: CMPSC463
 //  Problem: 3-1
 //  Description:
