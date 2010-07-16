@@ -135,6 +135,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 	}
 	
 	while (totalCycles <= 10000 && cycles <= 2500) { 
+		cerr << "Cycle" << totalCycles << endl;
 		if(totalCycles % 100 == 0) 
 			cerr << "CYCLE " << totalCycles << endl;
 		//	Exploration Stage
@@ -295,7 +296,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     }
     //	Sort edges in descending order based upon cost
     sort(c.begin(), c.end(), des_cmp_cost);
-    for_each(c.begin(), c.end(), printEdge);
+    //for_each(c.begin(), c.end(), printEdge);
     
     //  Now Create tree until complete
     while(treeCount != g->getCount() - 1) {
@@ -333,15 +334,17 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
                 highHub = heap->deleteMax();
                 //  Add all edges in highHub to tree
                 for(iedge1 = highHub->edges.begin(); iedge1 < highHub->edges.end(); iedge1++) {
-                    cout << "next loop\n";
+                    //cout << "next loop\n";
                     pEdge = *iedge1;
+                    if(treeCount == g->getCount() - 1)
+                    	break;
                     tree.push_back(pEdge);
-                    cout << pEdge->getDestination(NULL)->data << ", " << pEdge->getSource(NULL)->data << endl;
+                    //cout << pEdge->getDestination(NULL)->data << ", " << pEdge->getSource(NULL)->data << endl;
                     treeCount++;
                     // Update Source Vertex
                     h = hubs[pEdge->getSource(NULL)->data - 1];
-                    cout << "\n\nSource\n";
-                    for_each(h->edges.begin(), h->edges.end(), printEdge);
+                    //cout << "\n\nSource\n";
+                    //for_each(h->edges.begin(), h->edges.end(), printEdge);
                     for(iedge2 = h->edges.begin() + 1; iedge2 < h->edges.end(); iedge2++) {
                         pE = *iedge2;
                         //cout << pE->getDestination(NULL)->data << ", " << pE->getSource(NULL)->data << endl;
@@ -352,8 +355,8 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
                     }
                     //Update Destination
                     h = hubs[pEdge->getDestination(NULL)->data - 1];
-                    cout << "\n\nDestination\n";
-                    for_each(h->edges.begin(), h->edges.end(), printEdge);
+                    //cout << "\n\nDestination\n";
+                    //for_each(h->edges.begin(), h->edges.end(), printEdge);
                     for(iedge2 = h->edges.begin() + 1; iedge2 < h->edges.end(); iedge2++) {
                         pE = *iedge2;
                         
@@ -364,6 +367,8 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
                         }
                     }
                 }
+                if(treeCount == g->getCount() - 1)
+                    break;
             }
             //  Update Heap
             heap->updateHeap();
