@@ -266,6 +266,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 	vector<Hub*>::iterator ihubs2;
     Hub *highHub = NULL;
     vector<int> uf( g->getCount()+1 , 0 );
+    BinaryHeap* heap;
 
     //	Put all edges into a vector
     vertWalkPtr = g->getFirst();
@@ -294,7 +295,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     }
     //	Sort edges in descending order based upon cost
     sort(c.begin(), c.end(), des_cmp_cost);
-    
+    for_each(c.begin(), c.end(), printEdge);
     
     //  Now Create tree until complete
     while(treeCount != g->getCount() - 1) {
@@ -304,7 +305,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 				hubs.push_back(new Hub());
 			}
 			for(unsigned int index = 0; index < g->getCount(); index++) {
-                cout << "Vert " << index << " size: " << hubs[index]->edges.size() << endl;
+                //cout << "Vert " << index << " size: " << hubs[index]->edges.size() << endl;
 			}
             //  Get Degree of each vertice in candidate set
             for(iedge1 = c.begin(); iedge1 < c.end(); iedge1++) {
@@ -314,60 +315,72 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
                 hubs[vertIndex - 1]->edges.push_back(pEdge);
                 //  Handle Destination
                 vertIndex = pEdge->getDestination(NULL)->data; // the vertice number uniquely identifies each vertice
-                cout << "index: " << vertIndex << endl;
-                cout << "# edges at index " << hubs[vertIndex - 1]->edges.size() << endl;
+                //cout << "index: " << vertIndex << endl;
+                //cout << "# edges at index " << hubs[vertIndex - 1]->edges.size() << endl;
                 hubs[vertIndex - 1]->edges.push_back(pEdge);
             }
-            cout << "OUT OF LOOP\n";
+            //	cout << "OUT OF LOOP\n";
             //  Put Potential hubs in to heap
             //  First get rid of vertices with zero edges from candidate set
             for(ihubs2 = hubs.begin(); ihubs2 < hubs.end(); ihubs2++) {
                 pHub = *ihubs2;
                 if(pHub->edges.size() != 0) {
 					possVerts.push_back(pHub);
-                    }
                 }
-                BinaryHeap* heap = new BinaryHeap( possVerts );
+                
+                heap = new BinaryHeap( possVerts );
                 //  Get highest degree v to make our initial hub (should be top of heap)
                 highHub = heap->deleteMax();
                 //  Add all edges in highHub to tree
                 for(iedge1 = highHub->edges.begin(); iedge1 < highHub->edges.end(); iedge1++) {
+                    cout << "next loop\n";
                     pEdge = *iedge1;
                     tree.push_back(pEdge);
+                    cout << pEdge->getDestination(NULL)->data << ", " << pEdge->getSource(NULL)->data << endl;
                     treeCount++;
                     // Update Source Vertex
-                    h = hubs[pEdge->getSource(NULL)->data];
+                    h = hubs[pEdge->getSource(NULL)->data - 1];
+                    cout << "\n\nSource\n";
+                    for_each(h->edges.begin(), h->edges.end(), printEdge);
                     for(iedge2 = h->edges.begin() + 1; iedge2 < h->edges.end(); iedge2++) {
                         pE = *iedge2;
+                        //cout << pE->getDestination(NULL)->data << ", " << pE->getSource(NULL)->data << endl;
                         if(pE->getDestination(NULL)->inTree == true && pE->getSource(NULL)->inTree == true) {
-                            h->edges.erase(iedge2);
+                            if(!h->edges.empty())
+                            	h->edges.erase(iedge2);
                         }
                     }
                     //Update Destination
-                    h = hubs[pEdge->getDestination(NULL)->data];
+                    h = hubs[pEdge->getDestination(NULL)->data - 1];
+                    cout << "\n\nDestination\n";
+                    for_each(h->edges.begin(), h->edges.end(), printEdge);
                     for(iedge2 = h->edges.begin() + 1; iedge2 < h->edges.end(); iedge2++) {
                         pE = *iedge2;
+                        
+                        //cout << pE->getDestination(NULL)->data << ", " << pE->getSource(NULL)->data << endl;
                         if(pE->getDestination(NULL)->inTree == true && pE->getSource(NULL)->inTree == true) {
-                            h->edges.erase(iedge2);
+                            if(!h->edges.empty())
+                            	h->edges.erase(iedge2);
                         }
                     }
                 }
-                //  Update Heap
-                heap->updateHeap();
-            } else {
-                //	C is empty
-                for (unsigned int j = 0; j < 5*g->getCount(); j++) {
-                    if (v.empty()) {
-                        break;
-                    }
-                    c.push_back(v.back());
-                    v.pop_back();
-                }
-                sort(c.begin(), c.end(), des_cmp_cost);
             }
+            //  Update Heap
+            heap->updateHeap();
+        } else {
+            //	C is empty
+            for (unsigned int j = 0; j < 5*g->getCount(); j++) {
+                if (v.empty()) {
+                    break;
+                }
+                c.push_back(v.back());
+                v.pop_back();
+            }
+            sort(c.begin(), c.end(), des_cmp_cost);
         }
-        return tree;
     }
+    return tree;
+}
 					  
 int findRoot(Vertex* v, vector<int> uf) {
 	// find the root 
