@@ -21,7 +21,9 @@ class Hub;
 
 class Hub {
 public:
+    unsigned int vertId;
     vector<Edge*> edges;
+    Vertex* vert;
 };
 
 /*
@@ -39,6 +41,7 @@ public:
 	int treeDegree;
 	int visited;
 	bool inTree;
+    bool isConn;
 	
 	double x_coord, y_coord;
 };	//	END VERTEX
@@ -164,6 +167,8 @@ int Graph::insertVertex(int dataIn) {
         newPtr->data = dataIn;
         newPtr->degree = 0;
         newPtr->visited = 0;
+        newPtr->inTree = false;
+        newPtr->isConn = false;
        // newPtr->edges = new vector<Edge*>;
         count++;
     } else {
@@ -201,6 +206,8 @@ int Graph::insertVertex(int dataIn, double x, double y) {
         newPtr->data = dataIn;
         newPtr->degree = 0;
         newPtr->visited = 0;
+        newPtr->inTree = false;
+        newPtr->isConn = false;
         newPtr->x_coord = x;
         newPtr->y_coord = y;
        // newPtr->edges = new vector<Edge*>;
