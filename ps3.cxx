@@ -260,7 +260,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 	Hub *pHub, *h;
 	Edge *pE, *pEdge, *edgeWalkPtr;
 	int vertIndex;
-    int numHubs = 0;
+   	int numHubs = 0;
     unsigned int treeCount = 0;
     vector<Edge*>::iterator iedge1;
 	vector<Edge*>::iterator iedge2;
@@ -414,9 +414,15 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     }
     //  Now that we have all the hubs we need to connect them.
     sort(possConn.begin(), possConn.end(), asc_cmp_plevel);
+    treeCount = 0;
     while(treeCount != g->getCount() - 1) {
+    	cout << treeCount << endl;
+    	if(possConn.empty())
+    		break;
         pEdge = possConn.back();
-        if(pEdge->getDestination(NULL)->isConn != true && pEdge->getSource(NULL)->isConn != true) {
+        //cout << pEdge->getDestination(NULL)->data << ", " << pEdge->getSource(NULL)->data << endl;
+        if(pEdge->getDestination(NULL)->isConn != true || pEdge->getSource(NULL)->isConn != true) {
+            cout << pEdge->getDestination(NULL)->data << ", " << pEdge->getSource(NULL)->data << endl;
             pEdge->getDestination(NULL)->isConn = true;
             pEdge->getSource(NULL)->isConn = true;
             tree.push_back(pEdge);
@@ -424,6 +430,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
         }
         possConn.pop_back();
     }
+    cout << "out of while\n";
     //  Return the degree constrained minimum spanning tree
     return tree;
 }
