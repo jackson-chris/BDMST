@@ -33,7 +33,7 @@ typedef struct {
 const double P_UPDATE_EVAP = 0.95;
 const double P_UPDATE_ENHA = 1.05;
 const int TABU_MODIFIER = 5;
-const int MAX_CYCLES = 25; // change back to 2500
+const int MAX_CYCLES = 2500; // change back to 2500
 
 double loopCount = 0;
 double evap_factor = 0.5;
@@ -72,7 +72,8 @@ int main( int argc, char *argv[])
     //  Process input file and get resulting graph
 	Graph *g = new Graph();
     processFile(g, fileName);
-	g->print();
+	//g->print();
+    cout << "Diameter Bound\n";
 	vector<Edge*> best = AB_DBMST(g, d);
 	sort(best.begin(), best.end(), asc_src);
     cout << "Best Tree num edges: " << best.size() << endl;
@@ -302,7 +303,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
         hubs[index]->vert = vert;
         vert = vert->pNextVert;
     }
-    cout << "Diameter Bound: " << d << endl;
+   // cout << "Diameter Bound: " << d << endl;
     //  Now get d - 1 hubs
     while(numHubs < HUBS_NEEDED && treeCount != g->getCount() - 1) {
         if(!c.empty()){
@@ -406,10 +407,13 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 //  Now that we have all the hubs we need to connect them.
 sort(possConn.begin(), possConn.end(), asc_cmp_plevel);
 //cout << "sorted possible connections.\n";
+int x1 = 0;
 while(treeCount != g->getCount() - 1 && !possConn.empty()) {
   //  cout << "trying to add edge connector.\n";
     pEdge = possConn.back();
     if(pEdge->getDestination(NULL)->isConn != true && pEdge->getSource(NULL)->isConn != true) {
+        //cout << "Added Connector: " <<  x1++ << " " << endl;
+       // cout << pEdge->getSource(NULL)->data << " " << pEdge->getDestination(NULL)->data << " " << pEdge->weight << " " << pEdge->pLevel << endl;
         pEdge->getDestination(NULL)->isConn = true;
         pEdge->getSource(NULL)->isConn = true;
         tree.push_back(pEdge);
