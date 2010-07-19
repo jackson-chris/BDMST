@@ -33,7 +33,7 @@ typedef struct {
 const double P_UPDATE_EVAP = 0.95;
 const double P_UPDATE_ENHA = 1.05;
 const int TABU_MODIFIER = 5;
-const int MAX_CYCLES = 1; // change back to 2500
+const int MAX_CYCLES = 25; // change back to 2500
 
 double loopCount = 0;
 double evap_factor = 0.5;
@@ -74,7 +74,8 @@ int main( int argc, char *argv[])
     processFile(g, fileName);
 	g->print();
 	vector<Edge*> best = AB_DBMST(g, d);
-	sort(best.begin(), best.end(), asc_src); 
+	sort(best.begin(), best.end(), asc_src);
+    cout << "Best Tree num edges: " << best.size() << endl;
 	for_each(best.begin(), best.end(), printEdge);
 	return 0;
 }
@@ -163,6 +164,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 			treeCost+=edgeWalkPtr->weight;
 		}
 		if (treeCost < bestCost) {
+            cout << "FOUND NEW BEST" << endl;
 			best = current;
 			bestCost = treeCost;
 			if (totalCycles != 1)
@@ -181,7 +183,6 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 		cycles++;
 		treeCost = 0;
 	}
-    cout << "LINEAR RANDOM" << endl;
     cout << "Cycles: " << totalCycles << endl;
 	cout << bestCost << endl;
 	return best;
@@ -263,7 +264,6 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     Hub *highHub = NULL;
     vector<int> uf( g->getCount()+1 , 0 );
     BinaryHeap* heap;
-
     //	Put all edges into a vector
     vertWalkPtr = g->getFirst();
     while (vertWalkPtr) {
@@ -304,7 +304,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     }
     cout << "Diameter Bound: " << d << endl;
     //  Now get d - 1 hubs
-    while(numHubs < HUBS_NEEDED ) {
+    while(numHubs < HUBS_NEEDED && treeCount != g->getCount() - 1) {
         if(!c.empty()){
             //  Get Degree of each vertice in candidate set
             for(iedge1 = c.begin(); iedge1 < c.end(); iedge1++) {
@@ -332,15 +332,15 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
             numHubs++;
             treeHubs.push_back(highHub);
             //  Add all edges in highHub to tree
-            cout << "Edges in HighHub\n";
-            for_each(highHub->edges.begin(), highHub->edges.end(), printEdge);
-            cout << "END highHub\n";
             for(iedge1 = highHub->edges.begin(); iedge1 < highHub->edges.end(); iedge1++) {
                 pEdge = *iedge1;
-                pEdge->getDestination(NULL)->inTree = true;
-                pEdge->getSource(NULL)->inTree = true;
-                tree.push_back(pEdge);
-                treeCount++;
+                if(!pEdge->inTree) {
+                    pEdge->getDestination(NULL)->inTree = true;
+                    pEdge->getSource(NULL)->inTree = true;
+                    pEdge->inTree = true;
+                    tree.push_back(pEdge);
+                    treeCount++;
+                }
             }
             //  Update potential connector edges
             if ( numHubs > 1 ) {
@@ -356,7 +356,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
                     }
                 }
             }
-            cout << "potential connectors: " << possConn.size() << endl;
+            //cout << "potential connectors: " << possConn.size() << endl;
                 //  Get rid of edges that are already in tree or that would cause a loop
             for(iedge1 = highHub->edges.begin(); iedge1 < highHub->edges.end(); iedge1++) {
                 pEdge = *iedge1;
@@ -401,21 +401,20 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
             }
             sort(c.begin(), c.end(), des_cmp_cost);
         }
-       // cout << "num hubs: " << numHubs << endl;
 }
-cout << "now trying to connect hubs." << endl;
+//cout << "now trying to connect hubs." << endl;
 //  Now that we have all the hubs we need to connect them.
 sort(possConn.begin(), possConn.end(), asc_cmp_plevel);
-cout << "sorted possible connections.\n";
+//cout << "sorted possible connections.\n";
 while(treeCount != g->getCount() - 1 && !possConn.empty()) {
-    cout << "trying to add edge connector.\n";
+  //  cout << "trying to add edge connector.\n";
     pEdge = possConn.back();
     if(pEdge->getDestination(NULL)->isConn != true && pEdge->getSource(NULL)->isConn != true) {
         pEdge->getDestination(NULL)->isConn = true;
         pEdge->getSource(NULL)->isConn = true;
         tree.push_back(pEdge);
         treeCount++;
-        cout << "added edge connector.\n";
+    //    cout << "added edge connector.\n";
     }
     possConn.pop_back();
 }
