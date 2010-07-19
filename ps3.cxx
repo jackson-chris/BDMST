@@ -33,13 +33,14 @@ typedef struct {
 const double P_UPDATE_EVAP = 0.95;
 const double P_UPDATE_ENHA = 1.05;
 const int TABU_MODIFIER = 5;
+const int MAX_CYCLES = 20; // change back to 2500
 
 double loopCount = 0;
-
 double evap_factor = 0.5;
 double enha_factor = 1.5;
 double maxCost = 0;
 double minCost = std::numeric_limits<double>::infinity();
+
 int cycles = 1;
 int totalCycles = 1;
 
@@ -106,14 +107,12 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 	double bestCost = std::numeric_limits<double>::infinity();
 	double treeCost = 0;
 	const int s = 75;
-	vector<Edge*> best;
+	vector<Edge*> best, current;
 	Vertex *vertWalkPtr;
 	Edge *edgeWalkPtr;
 	vector<Ant*> ants;
-	vector<Edge*>::iterator e;
-	vector<Edge*>::iterator ed;
+	vector<Edge*>::iterator e, ed;
 	Ant *a;
-	vector<Edge*> current;
 	//	Assign one ant to each vertex
 	vertWalkPtr = g->getFirst();
 	for (unsigned int i = 0; i < g->getCount(); i++) {
@@ -133,8 +132,9 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 		//	Done with this vertex's edges; move on to next vertex
 		vertWalkPtr = vertWalkPtr->pNextVert;
 	}
-	
-	while (totalCycles <= 10000 && cycles <= 2500) { 
+    g->print();
+    cout << "max: " << maxCost << ", min: " << minCost << endl;
+	while (totalCycles <= 10000 && cycles <= MAX_CYCLES) { 
 		cerr << "Cycle" << totalCycles << endl;
 		if(totalCycles % 100 == 0) 
 			cerr << "CYCLE " << totalCycles << endl;
@@ -250,11 +250,9 @@ void updatePheromonesPerEdge(Graph *g) {
 
 vector<Edge*> treeConstruct(Graph *g, int d) {
     //	Local Variables
-    vector<Edge*> v;
-    vector<Edge*> c;
+    vector<Edge*> v, c, tree, possConn;
     const int HUBS_NEEDED = d - 1;
-    vector<Hub*> hubs;
-    vector<Edge*> tree;
+    vector<Hub*> hubs, treeHubs;
     Vertex *vertWalkPtr, *vert, *v1, *v2;
     vector<Hub*> possVerts;
     Hub *pHub, *h;
@@ -262,17 +260,11 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     int vertIndex;
     int numHubs = 0;
     unsigned int treeCount = 0;
-    vector<Edge*>::iterator iedge1;
-    vector<Edge*>::iterator iedge2;
-    vector<Edge*>::iterator iedge3;
-    vector<Edge*>::iterator ie;
-    vector<Hub*>::iterator ihubs1;
-    vector<Hub*>::iterator ihubs2;
+    vector<Edge*>::iterator iedge1, iedge2, iedge3, ie;
+    vector<Hub*>::iterator ihubs1, ihubs2;
     Hub *highHub = NULL;
     vector<int> uf( g->getCount()+1 , 0 );
     BinaryHeap* heap;
-    vector<Hub*> treeHubs;
-    vector<Edge*> possConn;
 
     //	Put all edges into a vector
     vertWalkPtr = g->getFirst();
@@ -292,6 +284,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     }
     //	Sort edges in ascending order based upon pheromone level
     sort(v.begin(), v.end(), asc_cmp_plevel);
+    //for_each(v.begin(), v.end(), printEdge);
     //	Select 5n edges from the end of v( the highest pheromones edges) and put them into c.
     for (unsigned int i = 0; i < 5*g->getCount(); i++) {
         if (v.empty()) {
@@ -367,10 +360,10 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
                 //  Get rid of edges that are already in tree or that would cause a loop
             for(iedge1 = highHub->edges.begin(); iedge1 < highHub->edges.end(); iedge1++) {
                 pEdge = *iedge1;
-                cout << pEdge->getDestination(NULL)->data << ", " << pEdge->getSource(NULL)->data << endl;
+                //cout << pEdge->getDestination(NULL)->data << ", " << pEdge->getSource(NULL)->data << endl;
                 //  Update Source Vertex
                 h = hubs[pEdge->getSource(NULL)->data - 1];
-                cout << "\n\nSource\n";
+               // cout << "\n\nSource\n";
                 for(iedge2 = h->edges.begin() + 1; iedge2 < h->edges.end(); iedge2++) {
                     pE = *iedge2;
                     //cout << pE->getDestination(NULL)->data << ", " << pE->getSource(NULL)->data << endl;
@@ -382,11 +375,11 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
                 }
                     //Update Destination
                 h = hubs[pEdge->getDestination(NULL)->data - 1];
-                cout << "\n\nDestination\n";
+              //  cout << "\n\nDestination\n";
                     //for_each(h->edges.begin(), h->edges.end(), printEdge);
                 for(iedge2 = h->edges.begin() + 1; iedge2 < h->edges.end(); iedge2++) {
                     pE = *iedge2;
-                    cout << pE->getDestination(NULL)->data << ", " << pE->getSource(NULL)->data << endl;
+                   // cout << pE->getDestination(NULL)->data << ", " << pE->getSource(NULL)->data << endl;
                     if(pE->getDestination(NULL)->inTree == true && pE->getSource(NULL)->inTree == true) {
                         if(!h->edges.empty()) {
                             h->edges.erase(iedge2);
@@ -408,7 +401,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
             }
             sort(c.begin(), c.end(), des_cmp_cost);
         }
-        cout << "num hubs: " << numHubs << endl;
+       // cout << "num hubs: " << numHubs << endl;
 }
 cout << "now trying to connect hubs." << endl;
 //  Now that we have all the hubs we need to connect them.

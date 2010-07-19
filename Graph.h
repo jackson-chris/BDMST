@@ -386,7 +386,7 @@ void Graph::search(Vertex *vertPtr) {
 	vector<Edge*>::iterator e;
 	for ( e = vertPtr->edges.begin() ; e < vertPtr->edges.end(); e++ ) {
 		Edge* c = *e;
-		cout << "Vertex: " << c->getDestination(vertPtr)->data << ", with cost: " << c->weight << endl;
+		cout << "Vertex: " << c->getDestination(vertPtr)->data << ", with cost: " << c->weight << ", with ph: " << c->pLevel << endl;
 	}
 	cout << "//end of this vertex" << endl << endl;
     //  Check each Edge for the vertex
