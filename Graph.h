@@ -316,7 +316,7 @@ int Graph::insertEdge(int fromKey, int toKey, double weight) {
 double Graph::insertEdge(int fromKey, int toKey) {
     Edge *newPtr;
 	
-	double weight;
+	double weight = 0;
 	
     Vertex *vertFromPtr;
     Vertex *vertToPtr;
@@ -343,8 +343,9 @@ double Graph::insertEdge(int fromKey, int toKey) {
         return (-3);
     }
     //  Found verticies. Make edge.
-    newPtr->weight = sqrt((((vertFromPtr->x_coord - vertToPtr->x_coord) * (vertFromPtr->x_coord - vertToPtr->x_coord)) 
+    weight = sqrt((((vertFromPtr->x_coord - vertToPtr->x_coord) * (vertFromPtr->x_coord - vertToPtr->x_coord)) 
     	+ ((vertFromPtr->y_coord - vertToPtr->y_coord) * (vertFromPtr->y_coord - vertToPtr->y_coord))));
+    newPtr->weight = weight;
     ++vertFromPtr->degree;
     ++vertToPtr->degree;
     newPtr->setDestination(vertToPtr);

@@ -33,7 +33,7 @@ typedef struct {
 const double P_UPDATE_EVAP = 0.95;
 const double P_UPDATE_ENHA = 1.05;
 const int TABU_MODIFIER = 5;
-const int MAX_CYCLES = 20; // change back to 2500
+const int MAX_CYCLES = 1; // change back to 2500
 
 double loopCount = 0;
 double evap_factor = 0.5;
@@ -132,8 +132,6 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 		//	Done with this vertex's edges; move on to next vertex
 		vertWalkPtr = vertWalkPtr->pNextVert;
 	}
-    g->print();
-    cout << "max: " << maxCost << ", min: " << minCost << endl;
 	while (totalCycles <= 10000 && cycles <= MAX_CYCLES) { 
 		cerr << "Cycle" << totalCycles << endl;
 		if(totalCycles % 100 == 0) 
@@ -530,13 +528,15 @@ void processFile(Graph *g, char* fileName) {
     }
     //  Create each edge after processing edge count
     eCount = vCount*(vCount-1)/2;
-    for(int v1 = 1; v1<= vCount; v1++) {
-    	for(int j = 1; v1 + j<= vCount; j++){
+    for(int v1 = 1; v1 <= vCount; v1++) {
+    	for(int j = 1; v1 + j <= vCount; j++) {
         	cost = g->insertEdge(v1, v1 + j);
-			if (cost > maxCost)
+			if (cost > maxCost) {
 				maxCost = cost;
-			if (cost < minCost)
+			}
+			if (cost < minCost) {
 				minCost = cost;
+			}
     	}
 	}
 }
