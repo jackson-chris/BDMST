@@ -318,7 +318,6 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
                 //cout << "# edges at index " << hubs[vertIndex - 1]->edges.size() << endl;
                 hubs[vertIndex - 1]->edges.push_back(pEdge);
             }
-            //	cout << "OUT OF LOOP\n";
             //  Put Potential hubs in to heap
             //  First get rid of vertices with zero edges from candidate set
             for(ihubs2 = hubs.begin(); ihubs2 < hubs.end(); ihubs2++) {
@@ -333,6 +332,9 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
             numHubs++;
             treeHubs.push_back(highHub);
             //  Add all edges in highHub to tree
+            cout << "Edges in HighHub\n";
+            for_each(highHub->edges.begin(), highHub->edges.end(), printEdge);
+            cout << "END highHub\n";
             for(iedge1 = highHub->edges.begin(); iedge1 < highHub->edges.end(); iedge1++) {
                 pEdge = *iedge1;
                 pEdge->getDestination(NULL)->inTree = true;
