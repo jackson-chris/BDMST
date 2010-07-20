@@ -33,7 +33,7 @@ typedef struct {
 const double P_UPDATE_EVAP = 0.95;
 const double P_UPDATE_ENHA = 1.05;
 const int TABU_MODIFIER = 5;
-const int MAX_CYCLES = 25; // change back to 2500
+const int MAX_CYCLES = 2500; // change back to 2500
 
 double loopCount = 0;
 double evap_factor = 0.5;
@@ -47,6 +47,7 @@ int totalCycles = 1;
 //	Prototypes
 void processFile(Graph *g, char* file);
 void processFileOld(Graph *g, char* file);
+void processFileNew(Graph *g, char* file);
 vector<Edge*> AB_DBMST(Graph *g, int d);
 vector<Edge*> treeConstruct(Graph *g, int d);
 bool asc_cmp_plevel(Edge *a, Edge *b);
@@ -71,8 +72,10 @@ int main( int argc, char *argv[])
     d = atoi(argv[2]);
     //  Process input file and get resulting graph
 	Graph *g = new Graph();
-    processFile(g, fileName);
-	g->print();
+    //processFile(g, fileName);
+    processFileNew(g, fileName);
+	//g->print();
+	cout << "Diameter Bound\n";
 	vector<Edge*> best = AB_DBMST(g, d);
 	sort(best.begin(), best.end(), asc_src);
     cout << "Best Tree num edges: " << best.size() << endl;
@@ -302,7 +305,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
         hubs[index]->vert = vert;
         vert = vert->pNextVert;
     }
-    cout << "Diameter Bound: " << d << endl;
+    //cout << "Diameter Bound: " << d << endl;
     //  Now get d - 1 hubs
     while(numHubs < HUBS_NEEDED && treeCount != g->getCount() - 1) {
         if(!c.empty()){
@@ -401,23 +404,26 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
             }
             sort(c.begin(), c.end(), des_cmp_cost);
         }
-}
-//cout << "now trying to connect hubs." << endl;
-//  Now that we have all the hubs we need to connect them.
-sort(possConn.begin(), possConn.end(), asc_cmp_plevel);
-//cout << "sorted possible connections.\n";
-while(treeCount != g->getCount() - 1 && !possConn.empty()) {
-  //  cout << "trying to add edge connector.\n";
-    pEdge = possConn.back();
-    if(pEdge->getDestination(NULL)->isConn != true && pEdge->getSource(NULL)->isConn != true) {
-        pEdge->getDestination(NULL)->isConn = true;
-        pEdge->getSource(NULL)->isConn = true;
-        tree.push_back(pEdge);
-        treeCount++;
-    //    cout << "added edge connector.\n";
-    }
-    possConn.pop_back();
-}
+	}
+	//cout << "now trying to connect hubs." << endl;
+	//  Now that we have all the hubs we need to connect them.
+	sort(possConn.begin(), possConn.end(), asc_cmp_plevel);
+	//cout << "sorted possible connections.\n";
+	int x1 = 0;
+	while(treeCount != g->getCount() - 1 && !possConn.empty()) {
+	//  cout << "trying to add edge connector.\n";
+		pEdge = possConn.back();
+		if(pEdge->getDestination(NULL)->isConn != true && pEdge->getSource(NULL)->isConn != true) {
+	        //cout << "Added Connector: " <<  x1++ << " " << endl;
+	        // cout << pEdge->getSource(NULL)->data << " " << pEdge->getDestination(NULL)->data << " " << pEdge->weight << " " << pEdge->pLevel << endl;
+	        pEdge->getDestination(NULL)->isConn = true;
+	        pEdge->getSource(NULL)->isConn = true;
+	        tree.push_back(pEdge);
+	        treeCount++;
+	    //    cout << "added edge connector.\n";
+	    }
+	    possConn.pop_back();
+	}
     //  Return the degree constrained minimum spanning tree
 return tree;
 }
@@ -540,4 +546,32 @@ void processFile(Graph *g, char* fileName) {
 			}
     	}
 	}
+}
+
+void processFileNew(Graph *g, char* fileName) {
+    double x,y,cost;
+    //  Open file for reading  
+    ifstream inFile;
+    inFile.open(fileName);
+    assert(inFile.is_open());
+    int eCount, vCount;
+    //  Create each vertex after getting vertex count
+    inFile >> vCount;
+    for(int i = 1; i <= vCount; i++) {
+        g->insertVertex(i);
+    }
+    //  Create each edge after processing edge count
+    eCount = vCount*(vCount-1)/2;
+    for(int v1 = 1; v1<= vCount; v1++) {
+    	for(int j = 1; j <= vCount; j++){
+        	inFile >> cost;
+        	if(j > v1){
+        		g->insertEdge(v1, j, cost);
+				if (cost > maxCost)
+					maxCost = cost;
+				if (cost < minCost)
+					minCost = cost;
+    		}
+   		}
+   	}
 }

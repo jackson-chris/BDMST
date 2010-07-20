@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 }
 
 
-void processFile(Graph *g, char* fileName) {
+/*void processFile(Graph *g, char* fileName) {
     double x,y,cost;
     //  Open file for reading  
     ifstream inFile;
@@ -53,4 +53,32 @@ void processFile(Graph *g, char* fileName) {
 				minCost = cost;
     	}
 	}
+}*/
+
+void processFile(Graph *g, char* fileName) {
+    double x,y,cost;
+    //  Open file for reading  
+    ifstream inFile;
+    inFile.open(fileName);
+    assert(inFile.is_open());
+    int eCount, vCount;
+    //  Create each vertex after getting vertex count
+    inFile >> vCount;
+    for(int i = 1; i <= vCount; i++) {
+        g->insertVertex(i);
+    }
+    //  Create each edge after processing edge count
+    eCount = vCount*(vCount-1)/2;
+    for(int v1 = 1; v1<= vCount; v1++) {
+    	for(int j = 1; j <= vCount; j++){
+        	inFile >> cost;
+        	if(j > v1){
+        		g->insertEdge(v1, j, cost);
+				if (cost > maxCost)
+					maxCost = cost;
+				if (cost < minCost)
+					minCost = cost;
+    		}
+   		}
+   	}
 }
