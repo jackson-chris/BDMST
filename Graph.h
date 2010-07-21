@@ -24,6 +24,7 @@ public:
     unsigned int vertId;
     vector<Edge*> edges;
     Vertex* vert;
+    ~Hub(){}
 };
 
 /*
@@ -44,6 +45,7 @@ public:
     bool isConn;
 	
 	double x_coord, y_coord;
+	~Vertex(){}
 };	//	END VERTEX
 
 

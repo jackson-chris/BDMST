@@ -17,7 +17,7 @@ class BinaryHeap {
 public:
 	explicit BinaryHeap (int capacity = 100);
 	explicit BinaryHeap (const vector<Hub*> &items );
-	
+	~BinaryHeap(){array.~vector();}
 	bool isEmpty() const;
 	Hub* deleteMax();
     void updateHeap();
