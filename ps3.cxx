@@ -199,9 +199,11 @@ void updatePheromonesGlobal(Graph *g, vector<Edge*> best, bool improved) {
 	double XMin = 0.1;
 	double rand_evap_factor;
 	double IP;
+	vector<Edge*>::iterator ex;
+	
 	//	For each edge in the best tree update pheromone levels
-	for (unsigned int i = 0; i < g->getCount() - 1; i++) {
-		e = best[i];
+	for ( ex = best.begin() ; ex < best.end(); ex++ ) {
+		e = *ex;
 		IP = (maxCost - e->weight) + ((maxCost - minCost) / 3);
 		if (improved) {
 			//	IMPROVEMENT so Apply Enhancement
