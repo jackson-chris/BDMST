@@ -22,8 +22,8 @@ public:
 	Hub* deleteMax();
     void updateHeap();
 private:
-	int currentSize; // Number of elements in heap
 	vector<Hub*> array; // the heap array
+	int currentSize; // Number of elements in heap
 	void buildHeap();
 	void percolateDown(int hole);
 };
