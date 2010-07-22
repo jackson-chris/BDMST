@@ -346,7 +346,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 
 
 	//	Select 5n edges from the end of v( the highest pheromones edges) and put them into c.
-	for (unsigned int i = 0; i < 5*g->getCount(); i++) {
+	for (unsigned int i = 0; i < g->getCount()/2; i++) {
 		if (v.empty()) {
 			break;
 		}
@@ -381,6 +381,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 				//  Handle Destination
 				vertIndex = pEdge->getDestination(NULL)->data; // the vertice number uniquely identifies each vertice
 				hubs[vertIndex - 1]->edges.push_back(pEdge);
+                c.erase(iedge1);
 			}
 			//  Put Potential hubs in to heap
 			//  First get rid of vertices with zero edges from candidate set
@@ -398,7 +399,8 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 			//  Add all edges in highHub to tree
 			for(iedge1 = highHub->edges.begin(); iedge1 < highHub->edges.end(); iedge1++) {
 				pEdge = *iedge1;
-				if(!pEdge->inTree && treeCount < MAX_TREE_SIZE) {
+                highHub->vert->inTree = true;
+				if(!pEdge->inTree && treeCount < MAX_TREE_SIZE && !(pEdge->getDestination(NULL)->inTree == true && pEdge->getSource(NULL)->inTree == true)) {
 					pEdge->getDestination(NULL)->inTree = true;
 					pEdge->getSource(NULL)->inTree = true;
 					pEdge->inTree = true;
@@ -448,9 +450,11 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 			heap->updateHeap();
 		} 
 		else {
+            cout << "adding more candidates" <<endl;
 			//	C is empty
-			for (unsigned int j = 0; j < 5*g->getCount(); j++) {
+			for (unsigned int j = 0; j < g->getCount()/2; j++) {
 				if (v.empty()) {
+                    cout << "ran out of candidates" <<endl;
 					break;
 				}
 				c.push_back(v.back());
