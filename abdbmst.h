@@ -213,8 +213,6 @@ vector<Edge*> abdbmst::AB_DBMST() {
 	}
 	//cout << "Cycles: " << totalCycles << endl;
 	cout << bestCost << endl;
-	cycles =0;
-	totalCycles = 0;
 	return best;
 }
 
@@ -279,6 +277,7 @@ void abdbmst::updatePheromonesPerEdge() {
 }
 
 vector<Edge*> abdbmst::treeConstruct() {
+    cout << "in tree construct\n";
 	//	Local Variables
 	vector<Edge*> v, c, tree, possConn;
 	const int HUBS_NEEDED = d - 1;
@@ -332,7 +331,10 @@ vector<Edge*> abdbmst::treeConstruct() {
 		vert = vert->pNextVert;
 	}
 	//  Now get d - 1 hubs
+    cout << "num hubs: " << numHubs << endl;
+    cout << "treeCount: " << treeCount << endl;
 	while(numHubs < HUBS_NEEDED && treeCount != MAX_TREE_SIZE) {
+        cout << "Trying to get hubs\n";
 		if(!c.empty()){
 			//  Get Degree of each vertice in candidate set
 			for(iedge1 = c.begin(); iedge1 < c.end(); iedge1++) {
@@ -365,6 +367,7 @@ vector<Edge*> abdbmst::treeConstruct() {
 					pEdge->getSource(NULL)->inTree = true;
 					pEdge->inTree = true;
 					tree.push_back(pEdge);
+                    cout << "ADDED" << endl;
 					treeCount++;
 				}
 			}
@@ -428,6 +431,7 @@ vector<Edge*> abdbmst::treeConstruct() {
 			pEdge->getDestination(NULL)->isConn = true;
 			pEdge->getSource(NULL)->isConn = true;
 			tree.push_back(pEdge);
+            cout << "ADDED" << endl;
 			treeCount++;
 		}
 		possConn.pop_back();
