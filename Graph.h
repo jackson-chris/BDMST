@@ -24,6 +24,7 @@ public:
     unsigned int vertId;
     vector<Edge*> edges;
     Vertex* vert;
+	bool inTree;
     ~Hub(){}
 };
 
