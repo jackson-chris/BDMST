@@ -23,6 +23,7 @@ public:
     void insert(Hub* x);
 	Hub* deleteMax();
     void updateHeap();
+	int topSize();
 private:
 	vector<Hub*> array; // the heap array
 	unsigned int currentSize; // Number of elements in heap
@@ -50,6 +51,10 @@ bool BinaryHeap::isEmpty() const{
     return false;
 }
 
+int BinaryHeap::topSize() {
+	return array[1]->edges.size();
+}
+
 Hub* BinaryHeap::deleteMax() {
     Hub* temp = new Hub();
     if( isEmpty())
@@ -61,9 +66,9 @@ Hub* BinaryHeap::deleteMax() {
 }
 
 void BinaryHeap::percolateDown(int hole) {
-    int child;
+    unsigned int child;
     Hub* tmp = array[hole];
-    for( ; hole * 2 <= currentSize; hole = child) {
+    for( ; hole * (unsigned int) 2 <= currentSize; hole = child) {
         child = hole * 2;
         if( child != currentSize && array[child+1]->edges.size() > array[child]->edges.size())
             child++;
