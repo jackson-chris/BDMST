@@ -33,7 +33,7 @@ typedef struct {
 const double P_UPDATE_EVAP = 0.95;
 const double P_UPDATE_ENHA = 1.05;
 const int TABU_MODIFIER = 5;
-const int MAX_CYCLES = 250; // change back to 2500
+const int MAX_CYCLES = 15; // change back to 2500
 
 
 double loopCount = 0;
@@ -383,6 +383,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 			if(!temp.empty()) {
 				numHubs++;
 				treeHubs.push_back(highHub);
+				highHub->inTree = true;
 				added = true;
 			}
 			while(!temp.empty() && treeCount < MAX_TREE_SIZE) {
@@ -395,19 +396,6 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 				treeCount++;
 				cout << "added edge\n";
 			}
-			//  Update potential connector edges
-			if ( numHubs > 1 && added) {
-				for(int i = numHubs - 1; i >= 1; i--) {
-					v1 = highHub->vert; 
-					v2 = treeHubs[i]->vert;
-					for(iedge3 = v2->edges.begin(); iedge3 < v2->edges.end(); iedge3++) {
-						pEdge = *iedge3;
-						if(pEdge->getDestination(NULL)->data ==  v1->data && pEdge->getDestination(NULL)->inTree == true && v1->inTree == true) {
-							possConn.push_back(pEdge);
-						}
-					}
-				}
-			}
 			added = false;
 			//  Get rid of edges that are already in tree or that would cause a loop
 			for(iedge1 = highHub->edges.begin(); iedge1 < highHub->edges.end(); iedge1++) {
@@ -417,12 +405,14 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 				if(h->vertId != highHub->vertId) {
 					numEdges -= h->edges.size();
 					h->edges.clear();
+					h->inTree = true;
 				}
 				//Update Destination
 				h = hubs[pEdge->getDestination(NULL)->data - 1];
 				if(h->vertId != highHub->vertId) {
 					numEdges -= h->edges.size();
 					h->edges.clear();
+					h->inTree = true;
 				}
 			}
 			//  delete highHub edges
@@ -434,24 +424,49 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 			foo(hubs, c, numEdges, heap);
 		}
 	}
-	//  Now that we have our hubs and possible connectors build tree from disjoint items
-		cout << "Here are the hubs we used: ";
-		for(ihubs1 = treeHubs.begin(); ihubs1 < treeHubs.end(); ihubs1++) {
-			h = *ihubs1;
-			cout << h->vertId << ", ";
+	//	Now that we have our hubs get vertices not yet in tree
+	for(ihubs1 = hubs.begin(); ihubs1 < hubs.end(); ihubs1++) {
+		h = *ihubs1;
+		if(h->inTree == false) {
+			h->inTree = true;
+			treeHubs.push_back(h);
 		}
+	}
+	// debug
+	cout << "Here are the hubs we used: ";
+	for(ihubs1 = treeHubs.begin(); ihubs1 < treeHubs.end(); ihubs1++) {
+		h = *ihubs1;
+		cout << h->vertId << ", ";
+	}
+	cout << endl;
+	//debug
+	//	Now lets get the possible connections for them all.
+	for(unsigned int i = 0; i < treeHubs.size(); i++) {
+		v1 = treeHubs[i]->vert;
+		for(unsigned int j = i+1; j < treeHubs.size(); j++) {
+			v2 = treeHubs[j]->vert;
+			for(iedge3 = v1->edges.begin(); iedge3 < v1->edges.end(); iedge3++) {
+				pEdge = *iedge3;
+				//cout << "compairing: v1.pEdge: " << pEdge->getDestination(NULL)->data << ":" << hubs[pEdge->getDestination(NULL)->data - 1]->inTree << " and v2: " << v2->data << ":"<< hubs[v2->data - 1]->inTree << endl;
+				if(pEdge->getDestination(NULL)->data == v2->data && hubs[pEdge->getDestination(NULL)->data - 1]->inTree == true && hubs[v2->data - 1]->inTree == true) {
+					possConn.push_back(pEdge);
+				} else {
+				//	cout << "failed\n";
+				}
+			}
+		}
+	}
+	// 	debug
 		cout << endl << "Here are the Connectors we can use: " << endl;
 		for_each(possConn.begin(), possConn.end(), printEdge);
+		cout << "END" << endl << endl << endl;
+	//	debug
+	//  Now that we have our hubs and possible connectors build tree from disjoint items
+		//	TO DO
 	//  Now that we are done cleanup
 		hubs.clear();
 		possConn.clear();
 		treeHubs.clear();
-//    c.~vector();
-//    v.~vector();
-//    heap->~BinaryHeap();
-//    hubs.~vector();
-//    possConn.~vector();
-//    treeHubs.~vector();
 	//  Return the tree
 		return tree;
 	}
