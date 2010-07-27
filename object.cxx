@@ -442,7 +442,6 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 		}
 		cout << endl << "Here are the Connectors we can use: " << endl;
 		for_each(possConn.begin(), possConn.end(), printEdge);
-		tree.push_back(new Edge());
 	//  Now that we are done cleanup
 		hubs.clear();
 		possConn.clear();
