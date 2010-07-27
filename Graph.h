@@ -25,7 +25,7 @@ public:
     vector<Edge*> edges;
     Vertex* vert;
 	bool inTree;
-    ~Hub(){}
+    ~Hub(){edges.~vector();}
 };
 
 /*

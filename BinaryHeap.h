@@ -15,18 +15,34 @@ using namespace std;
 
 class BinaryHeap {
 public:
-	explicit BinaryHeap (int capacity = 100);
+	explicit BinaryHeap ();
 	explicit BinaryHeap (const vector<Hub*> &items );
+    BinaryHeap(int x);
 	~BinaryHeap(){array.~vector();}
 	bool isEmpty() const;
+    void insert(Hub* x);
 	Hub* deleteMax();
     void updateHeap();
 private:
 	vector<Hub*> array; // the heap array
-	int currentSize; // Number of elements in heap
+	unsigned int currentSize; // Number of elements in heap
 	void buildHeap();
 	void percolateDown(int hole);
 };
+
+BinaryHeap::BinaryHeap(int x ) : array(x + 10), currentSize( 0) {
+}
+
+void BinaryHeap::insert(Hub* x) {
+    if(currentSize == array.size() - 1)
+        array.resize(array.size() * 2);
+    //  Percolate up
+    int hole = ++currentSize;
+    for(; hole > 1 && x->edges.size() > array[hole /2]->edges.size(); hole /= 2) {
+        array[hole] = array[hole/2];
+    }
+    array[hole] = x;
+}
 
 bool BinaryHeap::isEmpty() const{
     if(currentSize == 0)

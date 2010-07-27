@@ -1,22 +1,22 @@
 #include <iostream>
-#include "BinaryHeap2.h"
+#include "BinaryHeap.h"
+#include "Graph.h"
 
 using namespace std;
 
 int main() {
-    vector<int>* v = new vector<int>();
-        v->push_back(2);
-        v->push_back(172);
-        v->push_back(7432);
-        v->push_back(102);
-        v->push_back(89);
-        v->push_back(383);
-        v->push_back(1);
-        v->push_back(38394);
-        v->push_back(25);
-    BinaryHeap* heap = new BinaryHeap(*v);
+    BinaryHeap* heap = new BinaryHeap(false);
+    int i = 0;
+    while (i < 4) {
+        Hub* d = new Hub();
+        d->vertId = i++;
+        for(int x = 0; x < i; x++) {
+            d->edges.push_back(new Edge());
+        }
+        heap->insert(d);
+    }
     while(!heap->isEmpty()) {
-        cout << heap->deleteMax() << endl;
+        cout << heap->deleteMax()->edges.size() << endl;
     }
     return 0;
 }
