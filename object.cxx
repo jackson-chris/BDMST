@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <vector>
 #include "Graph.h"
+#include "GraphHub.h"
 #include "BinaryHeap.h"
 #include <cmath>
 #include <cstring>
@@ -54,6 +55,7 @@ vector<Edge*> treeConstruct(Graph *g, int d);
 bool asc_cmp_plevel(Edge *a, Edge *b);
 bool des_cmp_cost(Edge *a, Edge *b);
 bool asc_src(Edge *a, Edge *b);
+bool asc_hub(Hub* a, Hub* b);
 void move(Graph *g, Ant *a);
 void updatePheromonesPerEdge(Graph *g);
 void updatePheromonesGlobal(Graph *g, vector<Edge*> best, bool improved);
@@ -62,6 +64,9 @@ void resetItems(Graph* g);
 void compute(Graph* g, int d);
 void foo(vector<Hub*> hubs, vector<Edge*> c, int & numEdges, BinaryHeap* heap);
 bool replinish(vector<Edge*> c, vector<Edge*> v, const unsigned int & CAN_SIZE);
+int findRoot(Vertex* v, vector<int> uf);
+bool looping(Edge* e, vector<int> uf);
+
 
 int main( int argc, char *argv[])
 {
@@ -145,6 +150,10 @@ bool des_cmp_cost(Edge *a, Edge *b) {
 
 bool asc_src(Edge* a, Edge* b) {
 	return (a->getSource(NULL)->data < b->getSource(NULL)->data);
+}
+
+bool asc_hub(Hub* a, Hub* b) {
+    return (a->vertId < b->vertId);
 }
 
 void printEdge(Edge* e) {
@@ -361,6 +370,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 		hubs[index]->vertId = index + 1;
 		hubs[index]->vert = vert;
 		hubs[index]->inTree = false;
+        hubs[index]->lenPath = 0;
 		vert = vert->pNextVert;
 	}
 	foo(hubs, c, numEdges, heap);
@@ -382,6 +392,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 			}
 			if(!temp.empty()) {
 				numHubs++;
+                highHub->lenPath = 1;
 				treeHubs.push_back(highHub);
 				highHub->inTree = true;
 				added = true;
@@ -431,8 +442,9 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 			h->inTree = true;
 			treeHubs.push_back(h);
 		}
-	}
-	// debug
+	}	
+    sort(treeHubs.begin(), treeHubs.end(), asc_hub );
+    // debug
 	cout << "Here are the hubs we used: ";
 	for(ihubs1 = treeHubs.begin(); ihubs1 < treeHubs.end(); ihubs1++) {
 		h = *ihubs1;
@@ -462,7 +474,51 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 		cout << "END" << endl << endl << endl;
 	//	debug
 	//  Now that we have our hubs and possible connectors build tree from disjoint items
-		//	TO DO
+/*
+        //  Create a mapping between old vertice number and new vertice number
+        map<int,int> lookup;
+        int num;
+        int i = 1;
+        for(iEdge1 = possConn.begin(), iEdge1 < possConn.end(); iEdge1++) {
+            pEdge = *iEdge1;
+            if(i == 1) {
+                num = pEdge->getSource(NULL)->data;
+                lookup[num]=i++;
+            } else if(lookup[pEdge->getSource(NULL)->data] != num) {
+                num = pEdge->getSource(NULL)->data;
+                lookup[num]=i++;
+            }
+        }
+        iEdge1 = possConn.end() - 1;
+        pEdge = *iEdge1;
+        lookup[pEdge->getSource(NULL)->data]=i;
+        //  Create Graph and insert all items in treeHubs
+        GraphHub* ghub = new GraphHub();
+        for(int i = 1, iHub1 = treeHubs.begin(), iHub1 < treeHubs.end(); iHub1++, i++) {
+            pHub = *iHub1;
+            ghub->insertVertex(i, pHub);
+        }
+        
+        //  Now add edges to graph.
+        for(iEdge1 = possConn.begin(), iEdge1 < possConn.end(); iEdge1++) {
+            pEdge = *iEdge1;
+            gHub->insertEdge(lookup[pEdge->getSource(NULL)->data], lookup[pEdge->getDestination(NULL)->data], pEdge->weight, pEdge->pLevel);
+        }
+        */
+        GraphHub* ghub = new GraphHub();
+        //  add all vertices
+        for(iHub1 = treeHubs.begin(), iHub1 < treeHubs.end(); iHub1++) {
+            pHub = *iHub1;
+            ghub->insertVertex(pHub->vertId, pHub);
+        }
+         //  Now add edges to graph.
+            for(iEdge1 = possConn.begin(), iEdge1 < possConn.end(); iEdge1++) {
+                pEdge = *iEdge1;
+                gHub->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
+            }
+        prim(gHub, tree);
+        
+        
 	//  Now that we are done cleanup
 		hubs.clear();
 		possConn.clear();
@@ -470,6 +526,57 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
 	//  Return the tree
 		return tree;
 	}
+	
+int findRoot(Vertex* v, vector<int> uf) {
+    // find the root 
+    int index = v->data;
+    int sourceRoot = uf[index];
+    while (sourceRoot != index) {
+        index = sourceRoot;
+        sourceRoot =uf[sourceRoot];
+    }
+    return index;
+}
+
+bool looping(Edge* e, vector<int> uf) {
+    if (uf[findRoot(e->getDestination(NULL), uf)] == uf[findRoot(e->getSource(NULL), uf)] && uf[findRoot(e->getSource(NULL), uf)] != 0) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+void prim() {
+    vector<Edge*> fr, mst;
+    vector<double> wt;
+    
+    double min = -1.0;
+    for(int v = 0; min != 0; v = min) {
+        min = 0;
+        for(int w = 1; w < g->getCount(); w++) {
+            if(mst[w] == 0) {
+                double P;
+                Edge* e = G.edge(v,w);
+                if(e) {
+                    if((P = e->wt()) < wt[w]) {
+                        wt[w] = P;
+                        fr[w] = e;
+                    }
+                }
+                if (wt[w] < wt[min]) {
+                    min = w;
+                }
+            }
+        }
+    }
+    //copy objects from mst into tree
+    for(iEdge = mst.begin(); iEdge < mst.end(); iEdge++) {
+        pEdge = *iEdge;
+        tree.push_back(pEdge);
+    }
+}
+
 
 bool replinish(vector<Edge*> c, vector<Edge*> v, const unsigned int & CAN_SIZE) {
 	if(v.empty()) {

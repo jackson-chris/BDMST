@@ -45,7 +45,7 @@ public:
 	int visited;
 	bool inTree;
     bool isConn;
-	
+    Hub* pHub;
 	double x_coord, y_coord;
 	~Vertex(){}
 };	//	END VERTEX
@@ -108,17 +108,17 @@ Vertex* Edge::getDestination(Vertex* loc) {
  *
  */
 
-class Graph{
+class GraphHub{
 private:
     unsigned int count;
     Vertex *first;
 	
 public:
-    Graph();
-    ~Graph();
-    int insertVertex(int dataIn);
+    GraphHub();
+    ~GraphHub();
+    int insertVertex(int dataIn, Hub* hub = NULL);
     int deleteVertex(int dltKey);
-    int insertEdge (int fromKey, int toKey, double weight);
+    int insertEdge (int fromKey, int toKey, double weight, double pLevelIn = 0);
     double insertEdge(int fromKey, int toKey);
     int insertVertex(int dataIn, double x, double y);
     bool emptyGraph();
@@ -129,16 +129,16 @@ public:
     double getVerticeWeight(Vertex *vertPtr);
 };
 
-Graph::Graph() {
+GraphHub::GraphHub() {
     count = 0;
     first = NULL;
 }
 
-Graph::~Graph() {
+GraphHub::~GraphHub() {
     
 }
 
-double Graph::getVerticeWeight(Vertex *vertPtr) {
+double GraphHub::getVerticeWeight(Vertex *vertPtr) {
     double sum  = 0.0;
     Edge* edgeWalkPtr;
     vector<Edge*>::iterator e;
@@ -149,11 +149,11 @@ double Graph::getVerticeWeight(Vertex *vertPtr) {
     return sum;
 }
 
-Vertex* Graph::getFirst() {
+Vertex* GraphHub::getFirst() {
 	return first;
 }
 
-bool Graph::emptyGraph() {
+bool GraphHub::emptyGraph() {
     return (count == 0);
 }
 
@@ -161,7 +161,7 @@ bool Graph::emptyGraph() {
 /*
  Insert data into the graph.
  */
-int Graph::insertVertex(int dataIn) {
+int GraphHub::insertVertex(int dataIn, Hub* hub = NULL) {
 	Vertex *newPtr;
     Vertex *locPtr;
     Vertex *predPtr;
@@ -173,6 +173,7 @@ int Graph::insertVertex(int dataIn) {
         newPtr->visited = 0;
         newPtr->inTree = false;
         newPtr->isConn = false;
+        newPtr->pHub = hub;
        // newPtr->edges = new vector<Edge*>;
         count++;
     } else {
@@ -200,7 +201,7 @@ int Graph::insertVertex(int dataIn) {
     return 1;
 }
 
-int Graph::insertVertex(int dataIn, double x, double y) {
+int GraphHub::insertVertex(int dataIn, double x, double y) {
 	Vertex *newPtr;
     Vertex *locPtr;
     Vertex *predPtr;
@@ -245,7 +246,7 @@ int Graph::insertVertex(int dataIn, double x, double y) {
 /*
  Delete an existing vertex only if its degree is 0.
  */
-int Graph::deleteVertex(int dltKey) {
+int GraphHub::deleteVertex(int dltKey) {
     Vertex *predPtr;
     Vertex *walkPtr;
     if(!first) {
@@ -279,7 +280,7 @@ int Graph::deleteVertex(int dltKey) {
 /*
  Insert an edge between two verticies.
  */
-int Graph::insertEdge(int fromKey, int toKey, double weight) {
+int GraphHub::insertEdge(int fromKey, int toKey, double weight, double pLevelIn = 0) {
     Edge *newPtr;
 
     Vertex *vertFromPtr;
@@ -287,6 +288,7 @@ int Graph::insertEdge(int fromKey, int toKey, double weight) {
     
     newPtr = new Edge;
     newPtr->weight = weight;
+    newPtr->pLevel = pLevelIn;
     if(!newPtr) {
         return (-1);
     }
@@ -317,7 +319,7 @@ int Graph::insertEdge(int fromKey, int toKey, double weight) {
 	return 1;
 }
 
-double Graph::insertEdge(int fromKey, int toKey) {
+double GraphHub::insertEdge(int fromKey, int toKey) {
     Edge *newPtr;
 	
 	double weight = 0;
@@ -361,11 +363,11 @@ double Graph::insertEdge(int fromKey, int toKey) {
 }
 
 
-unsigned int Graph::getCount() {
+unsigned int GraphHub::getCount() {
     return count;
 }
 
-void Graph::print() {
+void GraphHub::print() {
     Vertex *vertWalkPtr;
     //  Set all nodes to unvisited
     vertWalkPtr = first;
@@ -384,7 +386,7 @@ void Graph::print() {
 }
 
 
-void Graph::search(Vertex *vertPtr) {
+void GraphHub::search(Vertex *vertPtr) {
     //  Set vertex to processed
     vertPtr->visited =1;
 	cout << "Vertex: " << vertPtr->data << ", has edges to: " << endl;
