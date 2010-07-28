@@ -548,33 +548,20 @@ bool looping(Edge* e, vector<int> uf) {
 }
 
 void prim() {
-    vector<Edge*> fr, mst;
-    vector<double> wt;
-    
-    double min = -1.0;
-    for(int v = 0; min != 0; v = min) {
-        min = 0;
-        for(int w = 1; w < g->getCount(); w++) {
-            if(mst[w] == 0) {
-                double P;
-                Edge* e = G.edge(v,w);
-                if(e) {
-                    if((P = e->wt()) < wt[w]) {
-                        wt[w] = P;
-                        fr[w] = e;
-                    }
-                }
-                if (wt[w] < wt[min]) {
-                    min = w;
-                }
-            }
-        }
-    }
-    //copy objects from mst into tree
-    for(iEdge = mst.begin(); iEdge < mst.end(); iEdge++) {
-        pEdge = *iEdge;
-        tree.push_back(pEdge);
-    }
+	if(g->getCount() == 0)
+		return;
+	//	Initialize graph
+	Vertex* vertexPtr = g->getFirst();
+	while(vertexPtr) {
+		vertexPtr->inTree = false;
+		for(iEdge = vertexPtr->edges.begin(); iEdge < vertexPtr->edges.end(); iEdge++) {
+			pEdge = *iEdge;
+			pEdge->inTree = false;
+		}
+		vertexPtr = vertexPtr->nextVert;
+	}
+	//	Now derive spanning tree
+	
 }
 
 
