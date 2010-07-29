@@ -2,8 +2,8 @@
 //  Course: CMPMSC 463 - Spring 10
 
 
-#ifndef __GRAPH_H_INCLUDED__  
-#define __GRAPH_H_INCLUDED__  
+#ifndef __GRAPHHUB_H_INCLUDED__  
+#define __GRAPHHUB_H_INCLUDED__  
 
 
 #include <limits>

@@ -45,7 +45,7 @@ public:
 	int visited;
 	bool inTree;
     bool isConn;
-	
+    Hub* pHub;
 	double x_coord, y_coord;
 	~Vertex(){}
 };	//	END VERTEX
@@ -112,21 +112,23 @@ class Graph{
 private:
     unsigned int count;
     Vertex *first;
-	
+	void top_search(Vertex *pVert, vector<Vertex*> *top);
 public:
     Graph();
     ~Graph();
-    int insertVertex(int dataIn);
+    int insertVertex(int dataIn, Hub* hub = NULL);
     int deleteVertex(int dltKey);
-    int insertEdge (int fromKey, int toKey, double weight);
+    int insertEdge (int fromKey, int toKey, double weight, double pLevel = 0);
     double insertEdge(int fromKey, int toKey);
     int insertVertex(int dataIn, double x, double y);
     bool emptyGraph();
     unsigned int getCount();
 	void print();
-    void search(Vertex *vertPtr);
+    void print_search(Vertex *vertPtr);
 	Vertex* getFirst();
     double getVerticeWeight(Vertex *vertPtr);
+    void topSort(vector<Vertex*> *top);
+
 };
 
 Graph::Graph() {
@@ -161,7 +163,7 @@ bool Graph::emptyGraph() {
 /*
  Insert data into the graph.
  */
-int Graph::insertVertex(int dataIn) {
+int Graph::insertVertex(int dataIn, Hub* hub) {
 	Vertex *newPtr;
     Vertex *locPtr;
     Vertex *predPtr;
@@ -173,6 +175,7 @@ int Graph::insertVertex(int dataIn) {
         newPtr->visited = 0;
         newPtr->inTree = false;
         newPtr->isConn = false;
+        newPtr->pHub = hub;
        // newPtr->edges = new vector<Edge*>;
         count++;
     } else {
@@ -279,7 +282,7 @@ int Graph::deleteVertex(int dltKey) {
 /*
  Insert an edge between two verticies.
  */
-int Graph::insertEdge(int fromKey, int toKey, double weight) {
+int Graph::insertEdge(int fromKey, int toKey, double weight, double level) {
     Edge *newPtr;
 
     Vertex *vertFromPtr;
@@ -287,6 +290,7 @@ int Graph::insertEdge(int fromKey, int toKey, double weight) {
     
     newPtr = new Edge;
     newPtr->weight = weight;
+    newPtr->pLevel = level;
     if(!newPtr) {
         return (-1);
     }
@@ -377,28 +381,60 @@ void Graph::print() {
     vertWalkPtr = first;
     while(vertWalkPtr) {
         if(vertWalkPtr->visited == 0) {
-            search(vertWalkPtr);
+            print_search(vertWalkPtr);
         }
         vertWalkPtr = vertWalkPtr->pNextVert;
     }
 }
 
+void Graph::top_search(Vertex *pVert, vector<Vertex*> *top) {
+    vector<Edge*>::iterator iEdge;
+    Edge* pEdge;
+    pVert->visited = 1;
+    for(iEdge = pVert->edges.begin(); iEdge < pVert->edges.end(); iEdge++) {
+        pEdge = *iEdge;
+        if(pEdge->getDestination(NULL)->visited == 0) {
+            top_search(pEdge->getDestination(NULL), top);
+        }
+    }
+    top->push_back(pVert);
+    cout << "just pushed on: " << pVert->data << endl;
+}
 
-void Graph::search(Vertex *vertPtr) {
+void Graph::topSort(vector<Vertex*> *top) {
+    cout << "Doing top Sort:" << endl;
+    Vertex* pVert = first;
+    while(pVert) {
+        pVert->visited = 0;
+        pVert = pVert->pNextVert;
+    }
+    pVert = first;
+    while(pVert) {
+        if(pVert->visited == 0) {
+            top_search(pVert, top);
+        }
+        pVert = pVert->pNextVert;
+    }
+    
+}
+
+
+void Graph::print_search(Vertex *vertPtr) {
+    Edge *c, *d;
     //  Set vertex to processed
     vertPtr->visited =1;
 	cout << "Vertex: " << vertPtr->data << ", has edges to: " << endl;
 	vector<Edge*>::iterator e;
 	for ( e = vertPtr->edges.begin() ; e < vertPtr->edges.end(); e++ ) {
-		Edge* c = *e;
+        c = *e;
 		cout << "Vertex: " << c->getDestination(vertPtr)->data << ", with cost: " << c->weight << ", with ph: " << c->pLevel << endl;
 	}
 	cout << "//end of this vertex" << endl << endl;
     //  Check each Edge for the vertex
 	for ( e = vertPtr->edges.begin() ; e < vertPtr->edges.end(); e++ ) {
-		Edge* d = *e;
+        d = *e;
 		if (d->getDestination(vertPtr)->visited == 0) {
-			search(d->getDestination(vertPtr));
+			print_search(d->getDestination(vertPtr));
 		}
 	}
 }	//	END GRAPH
