@@ -218,7 +218,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 		//	Tree Construction Stage
 		current = treeConstruct(g, d);
 		//	Get new tree cost
-		for ( ed = current.begin() ; ed < current.end(); ed++ ) {
+		for ( ed = current.begin(); ed < current.end(); ed++ ) {
 			edgeWalkPtr = *ed;
 			treeCost+=edgeWalkPtr->weight;
 		}
@@ -580,8 +580,8 @@ int testDiameter(Graph* g) {
         pVert = *iVert;
         for(iEdge = pVert->edges.begin(); iEdge < pVert->edges.end(); iEdge++) {
             pEdge = *iEdge;
-            if(length_to[pEdge->getDestination(NULL)->data] <= length_to[pVert->data] + 1) {
-                length_to[pEdge->getDestination(NULL)->data] = length_to[pVert->data] + 1;
+            if(length_to[pEdge->getDestination(NULL)->data - 1] <= length_to[pVert->data - 1] + 1) {
+                length_to[pEdge->getDestination(NULL)->data - 1] = length_to[pVert->data - 1] + 1;
             }
         }
     }

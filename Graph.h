@@ -398,9 +398,11 @@ void Graph::top_search(Vertex *pVert, vector<Vertex*> *top) {
         }
     }
     top->push_back(pVert);
+    cout << "just pushed on: " << pVert->data << endl;
 }
 
 void Graph::topSort(vector<Vertex*> *top) {
+    cout << "Doing top Sort:" << endl;
     Vertex* pVert = first;
     while(pVert) {
         pVert->visited = 0;
