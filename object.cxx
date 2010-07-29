@@ -500,8 +500,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
         pEdge = *iedge1;
         gTest->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
     }
-    testDiameter(gTest);
-    cout << endl;
+    cout << "the diameter of best is " << testDiameter(gTest) << endl;
     //  Now that we are done cleanup
     delete gHub;
     delete gTest;
