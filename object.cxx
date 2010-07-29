@@ -64,7 +64,7 @@ void compute(Graph* g, int d);
 void foo(vector<Hub*> hubs, vector<Edge*> c, int & numEdges, BinaryHeap* heap);
 bool replinish(vector<Edge*> c, vector<Edge*> v, const unsigned int & CAN_SIZE);
 void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount);
-int testDiameter(Graph* g);
+int testDiameter(Graph* g, unsigned int orig_graph_size);
 
 int main( int argc, char *argv[])
 {
@@ -170,9 +170,10 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 	const int s = 75;
 	vector<Edge*> best, current;
 	Vertex *vertWalkPtr;
-	Edge *edgeWalkPtr;
+	Edge *edgeWalkPtr, *pEdge;
 	vector<Ant*> ants;
-	vector<Edge*>::iterator e, ed;
+	vector<Edge*>::iterator e, ed, iedge1;
+	
 	Ant *a;
 	//	Assign one ant to each vertex
 	vertWalkPtr = g->getFirst();
@@ -242,6 +243,23 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 		cycles++;
 		treeCost = 0;
 	}
+	
+	// Now that we have a complete tree test if it meets the diameter bound.
+    Graph* gTest = new Graph();
+        //  add all vertices
+    Vertex* pVert = g->getFirst();
+    while(pVert) {
+        if(pVert->inTree)
+        gTest->insertVertex(pVert->data);
+        pVert = pVert->pNextVert;
+    }
+         //  Now add edges to graph.
+    for(iedge1 = best.begin(); iedge1 < best.end(); iedge1++) {
+        pEdge = *iedge1;
+        gTest->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
+    }
+    cout << "the diameter of best is " << testDiameter(gTest, g->getCount()) << endl;
+	
 	cout << "Best cost: " << bestCost << endl;
 	
 	//	Reset items
@@ -483,27 +501,9 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
         pEdge = *iedge1;
         gHub->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
     }
-    //cout << "calling prims" << endl;
     prim(gHub, &tree, treeCount);
-    // Now that we have a complete tree test if it meets the diameter bound.
-    cout << "What is the diameter of best: ";
-    Graph* gTest = new Graph();
-        //  add all vertices
-    Vertex* pVert = g->getFirst();
-    while(pVert) {
-        if(pVert->inTree)
-        gTest->insertVertex(pVert->data);
-        pVert = pVert->pNextVert;
-    }
-         //  Now add edges to graph.
-    for(iedge1 = tree.begin(); iedge1 < tree.end(); iedge1++) {
-        pEdge = *iedge1;
-        gTest->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
-    }
-    cout << "the diameter of best is " << testDiameter(gTest) << endl;
     //  Now that we are done cleanup
     delete gHub;
-    delete gTest;
     hubs.clear();
     possConn.clear();
     treeHubs.clear();
@@ -567,12 +567,12 @@ void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount) {
 }
 
 
-int testDiameter(Graph* g) {
+int testDiameter(Graph* g, unsigned int orig_graph_size) {
     vector<Vertex*>::iterator iVert;
     vector<Edge*>::iterator iEdge;
     Edge* pEdge;
     Vertex* pVert;
-    vector<int> length_to(g->getCount(), 0);
+    vector<int> length_to(orig_graph_size, 0);
     vector<Vertex*> topOrder;
     g->topSort(&topOrder);
     for(iVert = topOrder.begin(); iVert < topOrder.end(); iVert++) {
