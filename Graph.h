@@ -43,6 +43,7 @@ public:
     int degree;
 	int treeDegree;
 	int visited;
+	int depth;
 	bool inTree;
     bool isConn;
     Hub* pHub;
@@ -66,6 +67,7 @@ private:
 public:
 	double pUpdatesNeeded;
 	bool inTree;
+	bool usable;
     double weight;
 	double pLevel;
 	void setSource(Vertex* s);
@@ -175,6 +177,7 @@ int Graph::insertVertex(int dataIn, Hub* hub) {
         newPtr->visited = 0;
         newPtr->inTree = false;
         newPtr->isConn = false;
+        newPtr->depth = -1;
         newPtr->pHub = hub;
        // newPtr->edges = new vector<Edge*>;
         count++;
@@ -215,6 +218,7 @@ int Graph::insertVertex(int dataIn, double x, double y) {
         newPtr->visited = 0;
         newPtr->inTree = false;
         newPtr->isConn = false;
+        newPtr->depth = -1;
         newPtr->x_coord = x;
         newPtr->y_coord = y;
        // newPtr->edges = new vector<Edge*>;
@@ -291,6 +295,7 @@ int Graph::insertEdge(int fromKey, int toKey, double weight, double level) {
     newPtr = new Edge;
     newPtr->weight = weight;
     newPtr->pLevel = level;
+    newPtr->usable = true;
     if(!newPtr) {
         return (-1);
     }

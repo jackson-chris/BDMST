@@ -63,7 +63,7 @@ void resetItems(Graph* g);
 void compute(Graph* g, int d);
 void foo(vector<Hub*> hubs, vector<Edge*> c, int & numEdges, BinaryHeap* heap);
 bool replinish(vector<Edge*> c, vector<Edge*> v, const unsigned int & CAN_SIZE);
-void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount);
+void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d);
 int testDiameter(Graph* g, unsigned int orig_graph_size);
 
 int main( int argc, char *argv[])
@@ -338,7 +338,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     //	Local Variables
     vector<Edge*> v, c, tree, possConn;
     stack<Edge*> temp;
-    unsigned const int CAN_SIZE = g->getCount() * 2;
+    unsigned const int CAN_SIZE = g->getCount() /4;
     int numEdges = 0;
     const unsigned int MAX_TREE_SIZE = g->getCount() - 1;
     vector<Hub*> hubs, treeHubs;
@@ -501,7 +501,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
         pEdge = *iedge1;
         gHub->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
     }
-    prim(gHub, &tree, treeCount);
+    prim(gHub, &tree, treeCount, d - 2);
     //  Now that we are done cleanup
     delete gHub;
     hubs.clear();
@@ -511,7 +511,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     return tree;
 }
 
-void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount) {
+void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
     vector<Edge*>::iterator iEdge;
     Vertex *pVert, *pVertChk;
     Edge *pEdge, *pEdgeMin;
@@ -534,8 +534,10 @@ void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount) {
     //	Now derive spanning tree
     pVert = g->getFirst();
     pVert->inTree = true;
+    pVert->depth = 0;
     done = false;
     while(!done) {
+        //cout << "loop" << endl;
         done = true;
         pVertChk = pVert;
         minEdge = -1;
@@ -545,7 +547,7 @@ void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount) {
             if( pVertChk->inTree == true) {
                 for(iEdge = pVertChk->edges.begin(); iEdge < pVertChk->edges.end(); iEdge++) {
                     pEdge = *iEdge;
-                    if(pEdge->getDestination(NULL)->inTree == false) {
+                    if(pEdge->getDestination(NULL)->inTree == false && pEdge->usable) {
                         done = false;
                         if(pEdge->pLevel > minEdge) {
                             minEdge = pEdge->pLevel;
@@ -558,10 +560,20 @@ void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount) {
         }
         if(pEdgeMin) {
             //  Found edge to insert into the tree
-            pEdgeMin->inTree = true;
-            pEdgeMin->getDestination(NULL)->inTree = true;
-            tree->push_back(pEdgeMin);
-            treeCount++;
+            //cout << pEdgeMin->getSource(NULL)->depth;
+            if(pEdgeMin->getSource(NULL)->depth < d / 2){
+            	//cout << "new edge" << endl;
+            	pEdgeMin->inTree = true;
+            	pEdgeMin->getDestination(NULL)->inTree = true;
+            	if(pEdgeMin->getSource(NULL)->depth == 0 && (d % 2 != 0))
+            		pEdgeMin->getDestination(NULL)->depth = 0;
+            	else 
+            		pEdgeMin->getDestination(NULL)->depth = pEdgeMin->getSource(NULL)->depth + 1;
+            	tree->push_back(pEdgeMin);
+            	treeCount++;
+           }
+           else
+           		pEdgeMin->usable = false;
         }
     }
 }
