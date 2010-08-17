@@ -6,9 +6,9 @@
 #include <cassert>
 #include <algorithm>
 #include <vector>
-#include "Graph.h"
+#include "NewGraph.h"
 //#include "GraphHub.h"
-#include "BinaryHeap.h"
+#include "NewBinaryHeap.h"
 #include <cmath>
 #include <cstring>
 #include <stack>

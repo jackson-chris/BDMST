@@ -8,7 +8,7 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
-#include "Graph.h"
+#include "NewGraph.h"
 #include "exceptions.h"
 
 using namespace std;

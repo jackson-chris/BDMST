@@ -11,7 +11,7 @@
 #include <vector>
 #include <math.h>
 #include <cmath>
-
+#include <cstdlib>
 
 using namespace std;
 
@@ -128,6 +128,7 @@ public:
 	void print();
     void print_search(Vertex *vertPtr);
 	Vertex* getFirst();
+	Vertex* getRand();
     double getVerticeWeight(Vertex *vertPtr);
     void topSort(vector<Vertex*> *top);
 
@@ -155,6 +156,15 @@ double Graph::getVerticeWeight(Vertex *vertPtr) {
 
 Vertex* Graph::getFirst() {
 	return first;
+}
+
+Vertex* Graph::getRand() {
+	int x = rand() % count;
+	Vertex* randPtr = first;
+	for(int i = 0; i < x; i++){
+		randPtr = randPtr->pNextVert;
+	}
+	return randPtr;
 }
 
 bool Graph::emptyGraph() {

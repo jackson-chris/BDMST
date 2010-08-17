@@ -13,7 +13,8 @@
 #include <cmath>
 #include <cstring>
 #include <stack>
-
+#include <queue>
+#include <cstdlib>
 
 using namespace std;
 
@@ -30,14 +31,14 @@ typedef struct {
 }Range;
 
 //	Globals
-const double P_UPDATE_EVAP = 0.95;
+const double P_UPDATE_EVAP = 1.05;
 const double P_UPDATE_ENHA = 1.05;
 const int TABU_MODIFIER = 5;
 const int MAX_CYCLES = 2500; // change back to 2500
 
 
 double loopCount = 0;
-double evap_factor = 0.5;
+double evap_factor = .65;
 double enha_factor = 1.5;
 double maxCost = 0;
 double minCost = std::numeric_limits<double>::infinity();
@@ -50,6 +51,7 @@ void processEFile(Graph *g, ifstream &inFile, int d);
 void processFileOld(Graph *g, ifstream &inFile, int d);
 void processRFile(Graph *g, ifstream &inFile, int d);
 vector<Edge*> AB_DBMST(Graph *g, int d);
+vector<Edge*> locOpt(Graph *g, int d, vector<Edge*> best);
 vector<Edge*> treeConstruct(Graph *g, int d);
 bool asc_cmp_plevel(Edge *a, Edge *b);
 bool des_cmp_cost(Edge *a, Edge *b);
@@ -65,6 +67,11 @@ void foo(vector<Hub*> hubs, vector<Edge*> c, int & numEdges, BinaryHeap* heap);
 bool replinish(vector<Edge*> c, vector<Edge*> v, const unsigned int & CAN_SIZE);
 void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d);
 int testDiameter(Graph* g, unsigned int orig_graph_size);
+int testDiam(vector<Edge*> best, Edge* pEdge);
+Edge* remEdge(vector<Edge*> best);
+int find(vector<int> UF, int start);
+int universalSearch(Graph* g, int start);
+
 
 int main( int argc, char *argv[])
 {
@@ -126,6 +133,9 @@ void compute(Graph* g, int d) {
     cout << "Diameter Bound: " << d << endl;
     cout << "Size of g: " << g->getCount() << endl;
 	vector<Edge*> best = AB_DBMST(g, d);
+	best = locOpt(g, d, best);
+	cout << "Made it out" << endl;
+	best = locOpt(g, d, best);
     cout << "Size of best: " << best.size() << endl;
 	//sort(best.begin(), best.end(), asc_src);
     cout << "Best Tree num edges: " << best.size() << endl;
@@ -223,7 +233,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 			edgeWalkPtr = *ed;
 			treeCost+=edgeWalkPtr->weight;
 		}
-		if (treeCost < bestCost) {
+		if (treeCost < bestCost && (current.size() == g->getCount() - 1)) {
 			cout << "FOUND NEW BEST at cycle: " << totalCycles <<endl;
 			best = current;
 			bestCost = treeCost;
@@ -338,7 +348,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     //	Local Variables
     vector<Edge*> v, c, tree, possConn;
     stack<Edge*> temp;
-    unsigned const int CAN_SIZE = g->getCount() /4;
+    unsigned const int CAN_SIZE = g->getCount();
     int numEdges = 0;
     const unsigned int MAX_TREE_SIZE = g->getCount() - 1;
     vector<Hub*> hubs, treeHubs;
@@ -487,7 +497,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     }
     // 	debug
     //cout << endl << "Here are the Connectors we can use: " << endl;
-   // for_each(possConn.begin(), possConn.end(), printEdge);
+    //for_each(possConn.begin(), possConn.end(), printEdge);
    // cout << "END" << endl << endl << endl;
     //	debug
     Graph* gHub = new Graph();
@@ -515,10 +525,10 @@ void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
     vector<Edge*>::iterator iEdge;
     Vertex *pVert, *pVertChk;
     Edge *pEdge, *pEdgeMin;
-    bool done;
+    bool done, back = false;
     double minEdge;
-    
-    
+    int first;
+    //g->print();
     if(g->emptyGraph())
         return;
     //	Initialize graph
@@ -532,7 +542,10 @@ void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
         pVert = pVert->pNextVert;
     }
     //	Now derive spanning tree
-    pVert = g->getFirst();
+    //pVert = g->getFirst();
+    
+    pVert = g->getRand();
+    first = pVert->data;
     pVert->inTree = true;
     pVert->depth = 0;
     done = false;
@@ -542,7 +555,8 @@ void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
         pVertChk = pVert;
         minEdge = -1;
         pEdgeMin = NULL;
-        while(pVertChk) {
+        back = false;
+        while(!back) {
             //  walk through graph checking vertices in tree
             if( pVertChk->inTree == true) {
                 for(iEdge = pVertChk->edges.begin(); iEdge < pVertChk->edges.end(); iEdge++) {
@@ -557,12 +571,20 @@ void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
                 }
             }
             pVertChk = pVertChk->pNextVert;
+            if(pVertChk == NULL){
+        		pVertChk = g->getFirst();
+        	}
+        	if(pVertChk->data == first){
+        		//cout << pVertChk->data;
+        		back = true;
+        	}
         }
         if(pEdgeMin) {
             //  Found edge to insert into the tree
             //cout << pEdgeMin->getSource(NULL)->depth;
             if(pEdgeMin->getSource(NULL)->depth < d / 2){
             	//cout << "new edge" << endl;
+            	//cout << "Edge: " << pEdgeMin->getSource(NULL)->data << ", " << pEdgeMin->getDestination(NULL)->data << endl;
             	pEdgeMin->inTree = true;
             	pEdgeMin->getDestination(NULL)->inTree = true;
             	if(pEdgeMin->getSource(NULL)->depth == 0 && (d % 2 != 0))
@@ -571,16 +593,100 @@ void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
             		pEdgeMin->getDestination(NULL)->depth = pEdgeMin->getSource(NULL)->depth + 1;
             	tree->push_back(pEdgeMin);
             	treeCount++;
-           }
-           else
-           		pEdgeMin->usable = false;
+            }
+            else
+            	pEdgeMin->usable = false;
         }
     }
+    //cout << endl << endl << endl;
 }
 
+vector<Edge*> locOpt(Graph *g, int d, vector<Edge*> best){
+	cout << "locOpt" << endl;
+	vector<int> tree(g->getCount(), -1);
+	vector<Edge*>::iterator e, iEdge;
+	Vertex* pVert;
+	int x, y;
+	Edge *pEdge;
+	Edge* cand = NULL;
+	Edge* old = remEdge(best);
+	
+	//add remaining edges to union find
+	for ( e = best.begin() ; e < best.end(); e++ ) {
+		pEdge = *e;
+		x = pEdge->getSource(NULL)->data;
+		y = pEdge->getDestination(NULL)->data;
+		if(tree[x] != -1)
+			tree[y] = x;
+		else if(tree[y] != -1)
+			tree[x] = y;
+		else{
+			tree[x] = x;
+			tree[y] = x;
+		}
+	}
+	
+	//try to find possible replacements
+	pVert = g->getFirst();
+    while(pVert) {
+        for(iEdge = pVert->edges.begin(); iEdge < pVert->edges.end(); iEdge++) {
+            pEdge = *iEdge;
+            x = pEdge->getSource(NULL)->data;
+			y = pEdge->getDestination(NULL)->data;
+            if((find(tree, x) != find(tree, y)) && (pEdge->weight < old->weight) && (testDiam(best, pEdge) <= d)){
+            	cout << "possible new candidate" << endl;
+            	if(cand != NULL){
+            		if(pEdge->weight < cand->weight)
+            			cand = pEdge;
+            	}
+            	else
+            		cand = pEdge;
+           }
+        }
+        pVert = pVert->pNextVert;
+    }
+	cout << "out of while" << endl;
+	
+	if(cand){
+		best.push_back(cand);
+		return best;
+	}
+	else{
+		best.push_back(old);
+		return best;
+	}
+}
+
+int testDiam(vector<Edge*> best, Edge* pEdge){
+	cout << "testDiam" << endl;
+	Graph* gTest = new Graph();
+	Edge* e;
+	vector<Edge*>::iterator iedge;
+        //  add all vertices
+    Vertex* pVert = gTest->getFirst();
+    int start, diameter;
+    while(pVert) {
+        if(pVert->inTree)
+        gTest->insertVertex(pVert->data);
+        pVert = pVert->pNextVert;
+    }
+         //  Now add edges to graph.
+    for(iedge = best.begin(); iedge < best.end(); iedge++) {
+        e = *iedge;
+        gTest->insertEdge(e->getSource(NULL)->data, e->getDestination(NULL)->data, e->weight, e->pLevel);
+    }
+	gTest->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
+	
+	start = universalSearch(gTest, 0);
+	diameter = universalSearch(gTest, start);
+	
+	delete gTest;
+	
+	return diameter;
+}
 
 int testDiameter(Graph* g, unsigned int orig_graph_size) {
-    vector<Vertex*>::iterator iVert;
+    /*vector<Vertex*>::iterator iVert;
     vector<Edge*>::iterator iEdge;
     Edge* pEdge;
     Vertex* pVert;
@@ -602,9 +708,98 @@ int testDiameter(Graph* g, unsigned int orig_graph_size) {
             max = length_to[i];
         }
     }
-    return max;
+    return max;*/
+    cout << "testDiameter" << endl;
+    int start, diameter;
+    start = universalSearch(g, 0);
+    cout << "back from universalSearch" << endl;
+	diameter = universalSearch(g, start);
+	return diameter;
 }
 
+int find(vector<int> UF, int start){
+	int x = start;
+	cout << "find" << endl;
+	while(x != UF[x]){
+		x = UF[x];
+	}
+	
+	return x;
+}
+
+int universalSearch(Graph* g, int start){
+	cout << "universalSearch" << endl;
+	vector<Edge*>::iterator e, iEdge;
+	Vertex* pVert, *v, *w;
+	bool back = false;
+	int size = g->getCount();
+	vector<int> numbering(size, 0);
+	int count = 1, max = 0;
+	Edge *pEdge;
+	queue<Vertex*> X;
+	//cout << "0" << endl;
+	
+	cout << "1" << endl;
+	pVert = g->getFirst();
+	for(int i = 0; i < start; i++)
+		pVert = pVert->pNextVert;
+	cout << "2" << endl;
+	while(!back) {
+        if(numbering[pVert->data] == 0){
+        	X.push(pVert);
+        	numbering[pVert->data] = count++;
+        }
+        cout << "3" << endl;
+        while(!X.empty()){
+        	v = X.front();
+        	for(iEdge = v->edges.begin(); iEdge < v->edges.end(); iEdge++){
+        		pEdge = *iEdge;
+        		if(pEdge->getSource(NULL)->data == v->data){
+        			w = pEdge->getDestination(NULL);
+        			if(numbering[w->data] == 0){
+        				X.push(w);
+        				numbering[w->data] = count++;
+        			}
+        		}
+        		else{
+        			w = pEdge->getSource(NULL);
+        			if(numbering[w->data] == 0){
+        				X.push(w);
+        				numbering[w->data] = count++;
+        			}
+        		}
+        	}
+        	cout << "4" << endl;
+        	X.pop();
+        }
+        cout << "5" << endl;
+        pVert = pVert->pNextVert;
+        if(pVert = NULL)
+        	pVert = g->getFirst();
+        if(pVert->data = start)
+        	back = true;
+    }
+    cout << "6" << endl;
+    for(int i = 0; i < size; i++){
+    	if( numbering[i] > numbering[max])
+    		max = i;
+    }
+   	cout << "7" << endl;
+   	return max;
+}
+
+Edge* remEdge(vector<Edge*> best){
+	cout << "remEdge" << endl;
+	int x = rand() % best.size();
+	int size = best.size();
+	Edge* randPtr = best[x];
+	Edge* tmp;
+	tmp = best[size - 1];
+	best[size - 1] = best[x];
+	best[x] = tmp;
+	best.pop_back();
+	return randPtr;
+}
 
 bool replinish(vector<Edge*> c, vector<Edge*> v, const unsigned int & CAN_SIZE) {
 	if(v.empty()) {
