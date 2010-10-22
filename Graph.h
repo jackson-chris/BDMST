@@ -9,9 +9,10 @@
 #include <limits>
 #include <iostream>
 #include <vector>
+#include <queue>
 #include <math.h>
 #include <cmath>
-#include <cstdlib>
+
 
 using namespace std;
 
@@ -128,9 +129,9 @@ public:
 	void print();
     void print_search(Vertex *vertPtr);
 	Vertex* getFirst();
-	Vertex* getRand();
     double getVerticeWeight(Vertex *vertPtr);
     void topSort(vector<Vertex*> *top);
+    int BFS(Vertex* pVert); 
 
 };
 
@@ -156,15 +157,6 @@ double Graph::getVerticeWeight(Vertex *vertPtr) {
 
 Vertex* Graph::getFirst() {
 	return first;
-}
-
-Vertex* Graph::getRand() {
-	int x = rand() % count;
-	Vertex* randPtr = first;
-	for(int i = 0; i < x; i++){
-		randPtr = randPtr->pNextVert;
-	}
-	return randPtr;
 }
 
 bool Graph::emptyGraph() {
@@ -430,7 +422,69 @@ void Graph::topSort(vector<Vertex*> *top) {
     }
     
 }
-
+/*
+void Graph::UniversalSearch() {
+    Vertex* vertWalkPtr = first;
+    while(vertWalkPtr) {
+        vertWalkPtr->visited = false;
+        vertWalkPtr = vertWalkPtr->pNextVert;
+    }
+    vertWalkPtr = first;
+    while(vertWalkPtr) {
+        if(vertWalkPtr->visited == 0) {
+            q.push(vertWalkPtr);
+            vertWalkPtr->visited = true;
+            while(!q.empty()) {
+                v = q.front();
+                q.pop();
+                for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
+                    eWalkPtr = *e;
+                    if(eWalkPtr->getDestination(NULL)->visited == false) {
+                        q.push(eWalkPtr->getDestination(NULL));
+                    }
+                }
+            }
+        }
+    }
+}
+*/
+int Graph::BFS(Vertex* pVert) {
+    int i = 0;
+    Edge *eWalkPtr;
+    vector<Edge*>::iterator e;
+    Vertex *b = new Vertex();
+    b->data = -1;
+    b->visited = true;
+    queue<Vertex*> q;
+    Vertex *vertWalkPtr;
+    vertWalkPtr = first;
+    while(vertWalkPtr) {
+        vertWalkPtr->visited = false;
+        vertWalkPtr = vertWalkPtr->pNextVert;
+    }
+    q.push(pVert);
+    pVert->visited = true;
+    q.push(b);
+    while(!q.empty()) {
+        vertWalkPtr = q.front();
+        q.pop();
+        if(vertWalkPtr->data == -1 && !q.empty()) {
+            i++;
+            q.push(b);
+        }
+        cout << vertWalkPtr->data << ", i: " << i << endl;
+        for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
+            eWalkPtr = *e;
+            if(eWalkPtr->getDestination(vertWalkPtr)->visited == false) {
+              //  cout << "pushing "<< eWalkPtr->getDestination(vertWalkPtr) << endl;
+                q.push(eWalkPtr->getDestination(vertWalkPtr));
+                eWalkPtr->getDestination(vertWalkPtr)->visited = true;
+            }
+            //cout << "blah" << endl;
+        }
+    }
+    return i;
+}
 
 void Graph::print_search(Vertex *vertPtr) {
     Edge *c, *d;
