@@ -8,13 +8,14 @@
 #include <cassert>
 #include <algorithm>
 #include <vector>
-#include "Graph.h"
+#include "Graph.cxx"
 #include "BinaryHeap.h"
 #include <cmath>
 #include <cstring>
 #include <stack>
 #include <queue>
 #include <cstdlib>
+#include "processFile.h"
 
 using namespace std;
 
@@ -47,9 +48,6 @@ int cycles = 1;
 int totalCycles = 1;
 
 //	Prototypes
-void processEFile(Graph *g, ifstream &inFile, int d);
-void processFileOld(Graph *g, ifstream &inFile, int d);
-void processRFile(Graph *g, ifstream &inFile, int d);
 vector<Edge*> AB_DBMST(Graph *g, int d);
 vector<Edge*> locOpt(Graph *g, int d, vector<Edge*> best);
 vector<Edge*> treeConstruct(Graph *g, int d);
@@ -61,12 +59,12 @@ void move(Graph *g, Ant *a);
 void updatePheromonesPerEdge(Graph *g);
 void updatePheromonesGlobal(Graph *g, vector<Edge*> best, bool improved);
 void printEdge(Edge* e);
-void resetItems(Graph* g);
-void compute(Graph* g, int d);
+void resetItems(Graph* g, processFile p);
+void compute(Graph* g, int d, processFile p);
 void foo(vector<Hub*> hubs, vector<Edge*> c, int & numEdges, BinaryHeap* heap);
 bool replinish(vector<Edge*> c, vector<Edge*> v, const unsigned int & CAN_SIZE);
 void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d);
-int testDiameter(Graph* g, unsigned int orig_graph_size);
+int testDiameter(Graph* g);
 int testDiam(vector<Edge*> best, Edge* pEdge);
 Edge* remEdge(vector<Edge*> best);
 int find(vector<int> UF, int start);
@@ -89,6 +87,7 @@ int main( int argc, char *argv[])
     strcpy(fileType,argv[2]);
     int d;
     d = atoi(argv[3]);
+    processFile p;
     //  Open file for reading
     ifstream inFile;
     inFile.open(fileName);
@@ -101,9 +100,9 @@ int main( int argc, char *argv[])
         for(int i = 0; i < numInst; i++) {
             cout << "Instance num: " << i+1 << endl;
             g = new Graph();
-            processEFile(g, inFile, d);
-            compute(g, d);
-            resetItems(g);
+            p.processEFile(g, inFile);
+            compute(g, d, p);
+            resetItems(g, p);
         }
 		
 	}
@@ -113,29 +112,31 @@ int main( int argc, char *argv[])
         for(int i = 0; i < numInst; i++) {
             cout << "Instance num: " << i+1 << endl;
             g = new Graph();
-            processRFile(g, inFile, d);
-            compute(g, d);
-            resetItems(g);
+            p.processRFile(g, inFile);
+            compute(g, d, p);
+            resetItems(g, p);
         }
 		
 	}
 	else {
 		cout << "USING o file type" << endl;
         g = new Graph();
-		processFileOld(g, inFile, d);
-        compute(g, d);
+		p.processFileOld(g, inFile);
+        compute(g, d, p);
 	}
     
 	return 0;
 }
 
-void compute(Graph* g, int d) {
+void compute(Graph* g, int d, processFile p) {
+	maxCost = p.getMax();
+	minCost = p.getMin();
     cout << "Diameter Bound: " << d << endl;
     cout << "Size of g: " << g->getCount() << endl;
 	vector<Edge*> best = AB_DBMST(g, d);
-	best = locOpt(g, d, best);
-	cout << "Made it out" << endl;
-	best = locOpt(g, d, best);
+	//best = locOpt(g, d, best);
+	//cout << "Made it out" << endl;
+	//best = locOpt(g, d, best);
     cout << "Size of best: " << best.size() << endl;
 	//sort(best.begin(), best.end(), asc_src);
     cout << "Best Tree num edges: " << best.size() << endl;
@@ -168,10 +169,11 @@ void printEdge(Edge* e) {
 	cout << e->getSource(NULL)->data << " " << e->getDestination(NULL)->data << " " << e->weight << " " << e->pLevel << endl;
 }
 
-void resetItems(Graph* g) {
+void resetItems(Graph* g, processFile p) {
 	free(g);
 	maxCost = 0;
 	minCost = std::numeric_limits<double>::infinity();
+	p.reset();
 }
 vector<Edge*> AB_DBMST(Graph *g, int d) {
 	//	Local Declerations
@@ -268,7 +270,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         pEdge = *iedge1;
         gTest->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
     }
-    cout << "the diameter of best is " << testDiameter(gTest, g->getCount()) << endl;
+    cout << "the diameter of best is " << testDiameter(gTest) << endl;
 	
 	cout << "Best cost: " << bestCost << endl;
 	
@@ -657,6 +659,37 @@ vector<Edge*> locOpt(Graph *g, int d, vector<Edge*> best){
 	}
 }
 
+int find(vector<int> UF, int start){
+	while(UF[start] != start)
+		start = UF[start];
+	
+	return start;
+}
+
+
+int testDiameter(Graph* g) {
+	int max = 0, temp = 0;
+    vector<Edge*>::iterator iEdge;
+    //Edge* pEdge;
+    Vertex* pVert;
+    pVert = g->getFirst();
+    while (pVert) {
+        temp = g->BFS(pVert);
+        if (max < temp)
+            max = temp;
+        pVert = pVert->pNextVert;
+    }
+    
+    //cout << max << endl;
+    
+    //pVert = g->getFirst();
+    //pVert = g->BFS_2(pVert);
+    //max = g->BFS(pVert);
+    
+    //cout << max << endl;
+    return max;
+}
+
 int testDiam(vector<Edge*> best, Edge* pEdge){
 	cout << "testDiam" << endl;
 	Graph* gTest = new Graph();
@@ -677,115 +710,11 @@ int testDiam(vector<Edge*> best, Edge* pEdge){
     }
 	gTest->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
 	
-	start = universalSearch(gTest, 0);
-	diameter = universalSearch(gTest, start);
+	diameter = testDiameter(gTest);
 	
 	delete gTest;
 	
 	return diameter;
-}
-
-int testDiameter(Graph* g, unsigned int orig_graph_size) {
-    /*vector<Vertex*>::iterator iVert;
-    vector<Edge*>::iterator iEdge;
-    Edge* pEdge;
-    Vertex* pVert;
-    vector<int> length_to(orig_graph_size, 0);
-    vector<Vertex*> topOrder;
-    g->topSort(&topOrder);
-    for(iVert = topOrder.begin(); iVert < topOrder.end(); iVert++) {
-        pVert = *iVert;
-        for(iEdge = pVert->edges.begin(); iEdge < pVert->edges.end(); iEdge++) {
-            pEdge = *iEdge;
-            if(length_to[pEdge->getDestination(NULL)->data - 1] <= length_to[pVert->data - 1] + 1) {
-                length_to[pEdge->getDestination(NULL)->data - 1] = length_to[pVert->data - 1] + 1;
-            }
-        }
-    }
-    int max = -1;
-    for(unsigned int i = 0; i < length_to.size(); i++) {
-        if (length_to[i] > max) {
-            max = length_to[i];
-        }
-    }
-    return max;*/
-    cout << "testDiameter" << endl;
-    int start, diameter;
-    start = universalSearch(g, 0);
-    cout << "back from universalSearch" << endl;
-	diameter = universalSearch(g, start);
-	return diameter;
-}
-
-int find(vector<int> UF, int start){
-	int x = start;
-	cout << "find" << endl;
-	while(x != UF[x]){
-		x = UF[x];
-	}
-	
-	return x;
-}
-
-int universalSearch(Graph* g, int start){
-	cout << "universalSearch" << endl;
-	vector<Edge*>::iterator e, iEdge;
-	Vertex* pVert, *v, *w;
-	bool back = false;
-	int size = g->getCount();
-	vector<int> numbering(size, 0);
-	int count = 1, max = 0;
-	Edge *pEdge;
-	queue<Vertex*> X;
-	//cout << "0" << endl;
-	
-	cout << "1" << endl;
-	pVert = g->getFirst();
-	for(int i = 0; i < start; i++)
-		pVert = pVert->pNextVert;
-	cout << "2" << endl;
-	while(!back) {
-        if(numbering[pVert->data] == 0){
-        	X.push(pVert);
-        	numbering[pVert->data] = count++;
-        }
-        cout << "3" << endl;
-        while(!X.empty()){
-        	v = X.front();
-        	for(iEdge = v->edges.begin(); iEdge < v->edges.end(); iEdge++){
-        		pEdge = *iEdge;
-        		if(pEdge->getSource(NULL)->data == v->data){
-        			w = pEdge->getDestination(NULL);
-        			if(numbering[w->data] == 0){
-        				X.push(w);
-        				numbering[w->data] = count++;
-        			}
-        		}
-        		else{
-        			w = pEdge->getSource(NULL);
-        			if(numbering[w->data] == 0){
-        				X.push(w);
-        				numbering[w->data] = count++;
-        			}
-        		}
-        	}
-        	cout << "4" << endl;
-        	X.pop();
-        }
-        cout << "5" << endl;
-        pVert = pVert->pNextVert;
-        if(pVert = NULL)
-        	pVert = g->getFirst();
-        if(pVert->data = start)
-        	back = true;
-    }
-    cout << "6" << endl;
-    for(int i = 0; i < size; i++){
-    	if( numbering[i] > numbering[max])
-    		max = i;
-    }
-   	cout << "7" << endl;
-   	return max;
 }
 
 Edge* remEdge(vector<Edge*> best){
@@ -887,73 +816,4 @@ void move(Graph *g, Ant *a) {
 		}
 	}
 }
- 
-void processFileOld(Graph *g, ifstream &inFile, int d) {
-   
-    int eCount, vCount;
-    int i, j;
-    double cost;
-    //  Create each vertex after getting vertex count
-    inFile >> vCount;
-    for(int i = 1; i <= vCount; i++) {
-        g->insertVertex(i);
-    }
-    //  Create each edge after processing edge count
-    eCount = vCount*(vCount-1)/2;
-    for(int e = 0; e < eCount; e++) {
-        inFile >> i >> j >> cost;
-        g->insertEdge(i, j, cost);
-		if (cost > maxCost)
-			maxCost = cost;
-		if (cost < minCost)
-			minCost = cost;
-    }
-}
 
-void processEFile(Graph *g, ifstream &inFile, int d) {
-    double x,y,cost;
-    int eCount, vCount;
-    //  Create each vertex after getting vertex count
-    inFile >> vCount;
-    for(int i = 1; i <= vCount; i++) {
-    	inFile >> x >> y;
-        g->insertVertex(i, x, y);
-    }
-    //  Create each edge after processing edge count
-    eCount = vCount*(vCount-1)/2;
-    for(int v1 = 1; v1 <= vCount; v1++) {
-    	for(int j = 1; v1 + j <= vCount; j++) {
-        	cost = g->insertEdge(v1, v1 + j);
-			if (cost > maxCost) {
-				maxCost = cost;
-			}
-			if (cost < minCost) {
-				minCost = cost;
-			}
-    	}
-	}
-}
-
-void processRFile(Graph *g, ifstream &inFile, int d) {
-    double cost;
-    int eCount, vCount;
-    //  Create each vertex after getting vertex count
-    inFile >> vCount;
-    for(int i = 1; i <= vCount; i++) {
-        g->insertVertex(i);
-    }
-    //  Create each edge after processing edge count
-    eCount = vCount*(vCount-1)/2;
-    for(int v1 = 1; v1<= vCount; v1++) {
-    	for(int j = 1; j <= vCount; j++){
-        	inFile >> cost;
-        	if(j > v1){
-        		g->insertEdge(v1, j, cost);
-				if (cost > maxCost)
-					maxCost = cost;
-				if (cost < minCost)
-					minCost = cost;
-    		}
-   		}
-   	}
-}
