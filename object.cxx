@@ -240,7 +240,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 			treeCost+=edgeWalkPtr->weight;
 		}
 		if (treeCost < bestCost && (current.size() == g->getCount() - 1)) {
-			//cout << "FOUND NEW BEST at cycle: " << totalCycles <<endl;
+			//cerr << "FOUND NEW BEST at cycle: " << totalCycles <<endl;
 			best = current;
 			bestCost = treeCost;
 			if (totalCycles != 1)
@@ -262,13 +262,13 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 	
 	// Now that we have a complete tree test if it meets the diameter bound.
     Graph* gTest = new Graph();
-        //  add all vertices
+    //  add all vertices
     Vertex* pVert = g->getFirst();
     while(pVert) {
         gTest->insertVertex(pVert->data);
         pVert = pVert->pNextVert;
     }
-         //  Now add edges to graph.
+    //  Now add edges to graph.
     for(iedge1 = best.begin(); iedge1 < best.end(); iedge1++) {
         pEdge = *iedge1;
         gTest->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
@@ -534,6 +534,7 @@ void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
     bool done, back = false;
     double minEdge;
     int first;
+	bool flag = true;
     //g->print();
     if(g->emptyGraph())
         return;
@@ -548,8 +549,7 @@ void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
         pVert = pVert->pNextVert;
     }
     //	Now derive spanning tree
-    //pVert = g->getFirst();
-    
+    //pVert = g->getFirst();    
     pVert = g->getRand();
     first = pVert->data;
     pVert->inTree = true;
@@ -593,8 +593,10 @@ void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
             	//cout << "Edge: " << pEdgeMin->getSource(NULL)->data << ", " << pEdgeMin->getDestination(NULL)->data << endl;
             	pEdgeMin->inTree = true;
             	pEdgeMin->getDestination(NULL)->inTree = true;
-            	if(pEdgeMin->getSource(NULL)->depth == 0 && (d % 2 != 0))
-            		pEdgeMin->getDestination(NULL)->depth = 0;
+            	if(pEdgeMin->getSource(NULL)->depth == 0 && (d % 2 != 0) && flag) {
+						pEdgeMin->getDestination(NULL)->depth = 0;
+						flag = false;
+				}
             	else 
             		pEdgeMin->getDestination(NULL)->depth = pEdgeMin->getSource(NULL)->depth + 1;
             	tree->push_back(pEdgeMin);
@@ -607,17 +609,10 @@ void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
     //cout << endl << endl << endl;
 }
 
-//vector<Edge*> locOptOneEdge(Graph *g, int d, vector<Edge*> best){
-//    Edge* e1;
-//    int r = rand() % best.size();
-//    e1 = best[r];
-    
-//}
-
 int find(vector<int> UF, int start){
 	while(UF[start] != start)
 		start = UF[start];
-	
+
 	return start;
 }
 
