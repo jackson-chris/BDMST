@@ -407,7 +407,6 @@ int Graph::BFS(Vertex* pVert) {
 }
 
 Vertex* Graph::BFS_2(Vertex* pVert) {
-    
     Edge *eWalkPtr;
     vector<Edge*>::iterator e;
     queue<Vertex*> q;
@@ -426,11 +425,9 @@ Vertex* Graph::BFS_2(Vertex* pVert) {
         for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
             eWalkPtr = *e;
             if(eWalkPtr->getDestination(vertWalkPtr)->visited == false) {
-              //  cout << "pushing "<< eWalkPtr->getDestination(vertWalkPtr) << endl;
                 q.push(eWalkPtr->getDestination(vertWalkPtr));
                 eWalkPtr->getDestination(vertWalkPtr)->visited = true;
             }
-            //cout << "blah" << endl;
         }
     }
     return vertWalkPtr;

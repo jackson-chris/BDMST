@@ -94,11 +94,15 @@ int main( int argc, char *argv[])
     assert(inFile.is_open());
     //  Process input file and get resulting graph
     Graph* g;
+    cout << "Parameters: " << endl;
+    cout << "P_UPDATE_EVAP: " << P_UPDATE_EVAP << ", P_UPDATE_ENHA: " << P_UPDATE_ENHA << ", Tabu_modifier: " << TABU_MODIFIER << endl;
+    cout << "max_cycles: " << MAX_CYCLES << ", evap_factor: " << evap_factor << ", enha_factor: " << enha_factor << endl;
+    cout << "Input file: " << fileName << ", Diameter Constraint: " << d << endl << endl;
     if(fileType[0] == 'e') {
-		cout << "USING e file type" << endl;
+		//cout << "USING e file type" << endl;
         inFile >> numInst;
         for(int i = 0; i < numInst; i++) {
-            cout << "Instance num: " << i+1 << endl;
+            //cout << "Instance num: " << i+1 << endl;
             g = new Graph();
             p.processEFile(g, inFile);
             compute(g, d, p);
@@ -107,10 +111,10 @@ int main( int argc, char *argv[])
 		
 	}
 	else if (fileType[0] == 'r') {
-		cout << "USING r file type" << endl;
+		//cout << "USING r file type" << endl;
         inFile >> numInst;
         for(int i = 0; i < numInst; i++) {
-            cout << "Instance num: " << i+1 << endl;
+            //cout << "Instance num: " << i+1 << endl;
             g = new Graph();
             p.processRFile(g, inFile);
             compute(g, d, p);
@@ -119,7 +123,7 @@ int main( int argc, char *argv[])
 		
 	}
 	else {
-		cout << "USING o file type" << endl;
+		//cout << "USING o file type" << endl;
         g = new Graph();
 		p.processFileOld(g, inFile);
         compute(g, d, p);
@@ -131,15 +135,15 @@ int main( int argc, char *argv[])
 void compute(Graph* g, int d, processFile p) {
 	maxCost = p.getMax();
 	minCost = p.getMin();
-    cout << "Diameter Bound: " << d << endl;
-    cout << "Size of g: " << g->getCount() << endl;
+    //cout << "Diameter Bound: " << d << endl;
+    //cout << "Size of g: " << g->getCount() << endl;
 	vector<Edge*> best = AB_DBMST(g, d);
 	//best = locOpt(g, d, best);
 	//cout << "Made it out" << endl;
 	//best = locOpt(g, d, best);
-    cout << "Size of best: " << best.size() << endl;
+    //cout << "Size of best: " << best.size() << endl;
 	//sort(best.begin(), best.end(), asc_src);
-    cout << "Best Tree num edges: " << best.size() << endl;
+    //cout << "Best Tree num edges: " << best.size() << endl;
 	for_each(best.begin(), best.end(), printEdge);
 }
 
@@ -208,7 +212,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 	}
 	while (totalCycles <= 10000 && cycles <= MAX_CYCLES) { 
 		if(totalCycles % 25 == 0) 
-			cerr << "CYCLE " << totalCycles << endl;
+			//cerr << "CYCLE " << totalCycles << endl;
 		//	Exploration Stage
 		for (int step = 1; step <= s; step++) {
 			if (step == s/3 || step == (2*s)/3) {
@@ -236,7 +240,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 			treeCost+=edgeWalkPtr->weight;
 		}
 		if (treeCost < bestCost && (current.size() == g->getCount() - 1)) {
-			cout << "FOUND NEW BEST at cycle: " << totalCycles <<endl;
+			//cout << "FOUND NEW BEST at cycle: " << totalCycles <<endl;
 			best = current;
 			bestCost = treeCost;
 			if (totalCycles != 1)
@@ -261,7 +265,6 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         //  add all vertices
     Vertex* pVert = g->getFirst();
     while(pVert) {
-        if(pVert->inTree)
         gTest->insertVertex(pVert->data);
         pVert = pVert->pNextVert;
     }
@@ -270,9 +273,10 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         pEdge = *iedge1;
         gTest->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
     }
-    cout << "the diameter of best is " << testDiameter(gTest) << endl;
-	
-	cout << "Best cost: " << bestCost << endl;
+    cout << "Diameter: " << endl;
+    cout << testDiameter(gTest) << endl;
+    cout << "Cost: " << endl;
+	cout << bestCost << endl;
 	
 	//	Reset items
 	ants.clear();
@@ -603,61 +607,12 @@ void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
     //cout << endl << endl << endl;
 }
 
-vector<Edge*> locOpt(Graph *g, int d, vector<Edge*> best){
-	cout << "locOpt" << endl;
-	vector<int> tree(g->getCount(), -1);
-	vector<Edge*>::iterator e, iEdge;
-	Vertex* pVert;
-	int x, y;
-	Edge *pEdge;
-	Edge* cand = NULL;
-	Edge* old = remEdge(best);
-	
-	//add remaining edges to union find
-	for ( e = best.begin() ; e < best.end(); e++ ) {
-		pEdge = *e;
-		x = pEdge->getSource(NULL)->data;
-		y = pEdge->getDestination(NULL)->data;
-		if(tree[x] != -1)
-			tree[y] = x;
-		else if(tree[y] != -1)
-			tree[x] = y;
-		else{
-			tree[x] = x;
-			tree[y] = x;
-		}
-	}
-	
-	//try to find possible replacements
-	pVert = g->getFirst();
-    while(pVert) {
-        for(iEdge = pVert->edges.begin(); iEdge < pVert->edges.end(); iEdge++) {
-            pEdge = *iEdge;
-            x = pEdge->getSource(NULL)->data;
-			y = pEdge->getDestination(NULL)->data;
-            if((find(tree, x) != find(tree, y)) && (pEdge->weight < old->weight) && (testDiam(best, pEdge) <= d)){
-            	cout << "possible new candidate" << endl;
-            	if(cand != NULL){
-            		if(pEdge->weight < cand->weight)
-            			cand = pEdge;
-            	}
-            	else
-            		cand = pEdge;
-           }
-        }
-        pVert = pVert->pNextVert;
-    }
-	cout << "out of while" << endl;
-	
-	if(cand){
-		best.push_back(cand);
-		return best;
-	}
-	else{
-		best.push_back(old);
-		return best;
-	}
-}
+//vector<Edge*> locOptOneEdge(Graph *g, int d, vector<Edge*> best){
+//    Edge* e1;
+//    int r = rand() % best.size();
+//    e1 = best[r];
+    
+//}
 
 int find(vector<int> UF, int start){
 	while(UF[start] != start)
@@ -668,25 +623,10 @@ int find(vector<int> UF, int start){
 
 
 int testDiameter(Graph* g) {
-	int max = 0, temp = 0;
-    vector<Edge*>::iterator iEdge;
-    //Edge* pEdge;
+    int max = 0;
     Vertex* pVert;
-    pVert = g->getFirst();
-    while (pVert) {
-        temp = g->BFS(pVert);
-        if (max < temp)
-            max = temp;
-        pVert = pVert->pNextVert;
-    }
-    
-    //cout << max << endl;
-    
-    //pVert = g->getFirst();
-    //pVert = g->BFS_2(pVert);
-    //max = g->BFS(pVert);
-    
-    //cout << max << endl;
+    pVert = g->BFS_2(g->getFirst());
+    max = g->BFS(pVert);
     return max;
 }
 
