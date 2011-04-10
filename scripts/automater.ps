@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# By: Christopher Jackson
+
+doStuff() {
+
+for i in 1 2 3 4 5
+do
+    for d in 5 10 15 20 40
+    do
+	out="out_${input}_i${i}_d${d}.out"
+    touch $out 
+    (time ./main input/$input e $d > output/$out) 2>> output/$out 
+    done
+done
+
+}
+input="estein250.txt"
+doStuff
