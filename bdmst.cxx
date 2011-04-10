@@ -70,6 +70,8 @@ int universalSearch(Graph* g, int start);
 void populateVector(Graph* g, vector<Edge*> *v);
 void getCandidateSet(vector<Edge*> *v, vector<Edge*> *c, const unsigned int & CAN_SIZE);
 void getHubs(Graph* g, BinaryHeap* heap, vector<Edge*> *v, vector<Edge*> *c, vector<Edge*> *tree, vector<Hub*> *hubs, vector<Hub*> *treeHubs, const unsigned int & MAX_TREE_SIZE, const unsigned int & CAN_SIZE);
+void getHubConnections(vector<Hub*> *treeHubs, vector<Edge*> *possConn, vector<Hub*> *hubs);
+
 int main( int argc, char *argv[])
 {
     //  Process input from command line
@@ -350,7 +352,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     vector<Edge*> v, c, tree, possConn;
     int numEdges = 0;
     vector<Hub*> hubs, treeHubs;
-    Vertex *vert, *v1, *v2;
+	Vertex *vert;
     Hub  *h, *pHub;
     Edge *pEdge;
     unsigned int treeCount = 0;
@@ -392,32 +394,20 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     }	
     sort(treeHubs.begin(), treeHubs.end(), asc_hub );
     //	Now lets get the possible connections for them all.
-    for(unsigned int i = 0; i < treeHubs.size(); i++) {
-        v1 = treeHubs[i]->vert;
-        for(unsigned int j = i+1; j < treeHubs.size(); j++) {
-            v2 = treeHubs[j]->vert;
-            for(iedge3 = v1->edges.begin(); iedge3 < v1->edges.end(); iedge3++) {
-                pEdge = *iedge3;
-                //cout << "compairing: v1.pEdge: " << pEdge->getDestination(NULL)->data << ":" << hubs[pEdge->getDestination(NULL)->data - 1]->inTree << " and v2: " << v2->data << ":"<< hubs[v2->data - 1]->inTree << endl;
-                if(pEdge->getDestination(NULL)->data == v2->data && hubs[pEdge->getDestination(NULL)->data - 1]->inTree == true && hubs[v2->data - 1]->inTree == true) {
-                    possConn.push_back(pEdge);
-                } else {
-                //	cout << "failed\n";
-                }
-            }
-        }
-    }
+	getHubConnections(&treeHubs, &possConn, &hubs);
+	//	Create a new graph, using hubs as vertices, and the edges from possible hub connections.
     Graph* gHub = new Graph();
-        //  add all vertices
+    //  add all vertices
     for(ihubs1 = treeHubs.begin(); ihubs1 < treeHubs.end(); ihubs1++) {
         pHub = *ihubs1;
         gHub->insertVertex(pHub->vertId, pHub);
     }
-         //  Now add edges to graph.
+	//  Now add edges to graph.
     for(iedge1 = possConn.begin(); iedge1 < possConn.end(); iedge1++) {
         pEdge = *iedge1;
         gHub->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
     }
+	//	now construct a tree from this new graph
     connectHubs(gHub, &tree, treeCount, d - 2);
     //  Now that we are done cleanup
     delete gHub;
@@ -427,6 +417,28 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     //  Return the tree
     return tree;
 }
+
+void getHubConnections(vector<Hub*> *treeHubs, vector<Edge*> *possConn, vector<Hub*> *hubs) {
+	//	Local Variables
+	Vertex *v1, *v2;
+	Edge* pEdge;
+	vector<Edge*>::iterator iedge3;
+	
+	//	Logic
+	for(unsigned int i = 0; i < treeHubs->size(); i++) {
+        v1 = (*treeHubs)[i]->vert;
+        for(unsigned int j = i+1; j < treeHubs->size(); j++) {
+            v2 = (*treeHubs)[j]->vert;
+            for(iedge3 = v1->edges.begin(); iedge3 < v1->edges.end(); iedge3++) {
+                pEdge = *iedge3;
+                //cout << "compairing: v1.pEdge: " << pEdge->getDestination(NULL)->data << ":" << hubs[pEdge->getDestination(NULL)->data - 1]->inTree << " and v2: " << v2->data << ":"<< hubs[v2->data - 1]->inTree << endl;
+                if(pEdge->getDestination(NULL)->data == v2->data && (*hubs)[pEdge->getDestination(NULL)->data - 1]->inTree == true && (*hubs)[v2->data - 1]->inTree == true)
+                    possConn->push_back(pEdge);
+            }
+        }
+    }
+}
+
 
 void getCandidateSet(vector<Edge*> *v, vector<Edge*> *c, unsigned const int & CAN_SIZE) {
 	for (unsigned int i = 0; i < CAN_SIZE; i++) {
