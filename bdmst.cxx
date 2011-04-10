@@ -37,7 +37,6 @@ const double P_UPDATE_ENHA = 1.05;
 const int TABU_MODIFIER = 5;
 const int MAX_CYCLES = 2500; // change back to 2500
 
-
 double loopCount = 0;
 double evap_factor = .65;
 double enha_factor = 1.5;
@@ -49,7 +48,7 @@ int totalCycles = 1;
 
 //	Prototypes
 vector<Edge*> AB_DBMST(Graph *g, int d);
-vector<Edge*> locOpt(Graph *g, int d, vector<Edge*> best);
+vector<Edge*> locOpt(Graph *g, int d, vector<Edge*> *best);
 vector<Edge*> treeConstruct(Graph *g, int d);
 bool asc_cmp_plevel(Edge *a, Edge *b);
 bool des_cmp_cost(Edge *a, Edge *b);
@@ -57,19 +56,20 @@ bool asc_src(Edge *a, Edge *b);
 bool asc_hub(Hub* a, Hub* b);
 void move(Graph *g, Ant *a);
 void updatePheromonesPerEdge(Graph *g);
-void updatePheromonesGlobal(Graph *g, vector<Edge*> best, bool improved);
+void updatePheromonesGlobal(Graph *g, vector<Edge*> *best, bool improved);
 void printEdge(Edge* e);
 void resetItems(Graph* g, processFile p);
 void compute(Graph* g, int d, processFile p);
-void heapifyHubs(vector<Hub*> hubs, vector<Edge*> c, int & numEdges, BinaryHeap* heap);
-bool replenish(vector<Edge*> c, vector<Edge*> v, const unsigned int & CAN_SIZE);
+void heapifyHubs(vector<Hub*> *hubs, vector<Edge*> *c, int & numEdges, BinaryHeap* heap);
+bool replenish(vector<Edge*> *c, vector<Edge*> *v, const unsigned int & CAN_SIZE);
 void connectHubs(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d);
 int testDiameter(Graph* g);
 Edge* remEdge(vector<Edge*> best);
 int find(vector<int> UF, int start);
 int universalSearch(Graph* g, int start);
-
-
+void populateVector(Graph* g, vector<Edge*> *v);
+void getCandidateSet(vector<Edge*> *v, vector<Edge*> *c, const unsigned int & CAN_SIZE);
+void getHubs(Graph* g, BinaryHeap* heap, vector<Edge*> *v, vector<Edge*> *c, vector<Edge*> *tree, vector<Hub*> *hubs, vector<Hub*> *treeHubs, const unsigned int & MAX_TREE_SIZE, const unsigned int & CAN_SIZE);
 int main( int argc, char *argv[])
 {
     //  Process input from command line
@@ -134,12 +134,7 @@ int main( int argc, char *argv[])
 void compute(Graph* g, int d, processFile p) {
 	maxCost = p.getMax();
 	minCost = p.getMin();
-    //cout << "Diameter Bound: " << d << endl;
-    //cout << "Size of g: " << g->getCount() << endl;
 	vector<Edge*> best = AB_DBMST(g, d);
-	//best = locOpt(g, d, best);
-	//cout << "Made it out" << endl;
-	//best = locOpt(g, d, best);
     //cout << "Size of best: " << best.size() << endl;
 	//sort(best.begin(), best.end(), asc_src);
     //cout << "Best Tree num edges: " << best.size() << endl;
@@ -247,9 +242,9 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 				cycles = 0;
 		} 
 		if (cycles % 100 == 0) {
-			updatePheromonesGlobal(g, best, false);
+			updatePheromonesGlobal(g, &best, false);
 		} else {
-			updatePheromonesGlobal(g, best, true);
+			updatePheromonesGlobal(g, &best, true);
 		}
 		if (totalCycles % 500 == 0) {
 			evap_factor *= P_UPDATE_EVAP; 
@@ -289,7 +284,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 	return best;
 }
 
-void updatePheromonesGlobal(Graph *g, vector<Edge*> best, bool improved) {
+void updatePheromonesGlobal(Graph *g, vector<Edge*> *best, bool improved) {
 	//	Local Variables
 	srand((unsigned) time(NULL));
 	double pMax = 1000*((maxCost - minCost) + (maxCost - minCost) / 3);
@@ -302,7 +297,7 @@ void updatePheromonesGlobal(Graph *g, vector<Edge*> best, bool improved) {
 	vector<Edge*>::iterator ex;
 
 	//	For each edge in the best tree update pheromone levels
-	for ( ex = best.begin() ; ex < best.end(); ex++ ) {
+	for ( ex = best->begin() ; ex < best->end(); ex++ ) {
 		e = *ex;
 		IP = (maxCost - e->weight) + ((maxCost - minCost) / 3);
 		if (improved) {
@@ -353,49 +348,25 @@ void updatePheromonesPerEdge(Graph *g) {
 vector<Edge*> treeConstruct(Graph *g, int d) {
     //	Local Variables
     vector<Edge*> v, c, tree, possConn;
-    stack<Edge*> temp;
-    unsigned const int CAN_SIZE = g->getCount();
     int numEdges = 0;
-    const unsigned int MAX_TREE_SIZE = g->getCount() - 1;
     vector<Hub*> hubs, treeHubs;
-    Vertex *vertWalkPtr, *vert, *v1, *v2;
+    Vertex *vert, *v1, *v2;
     Hub  *h, *pHub;
-    Edge *pEdge, *edgeWalkPtr;
-    int numHubs = 0;
+    Edge *pEdge;
     unsigned int treeCount = 0;
     vector<Edge*>::iterator iedge1, iedge2, iedge3, ie;
     vector<Hub*>::iterator ihubs1, ihubs2;
-    Hub *highHub = NULL;
-    bool added = false, isEmpty = false;
     BinaryHeap* heap = new BinaryHeap(g->getCount());
-
+	const unsigned int MAX_TREE_SIZE = g->getCount() - 1;
+	unsigned const int CAN_SIZE = g->getCount();
 	//	Logic
+	
     //	Put all edges into a vector
-    vertWalkPtr = g->getFirst();
-    while (vertWalkPtr) {
-        vertWalkPtr->treeDegree = 0;
-        vertWalkPtr->inTree = false;
-        vertWalkPtr->isConn = false;
-        for ( ie = vertWalkPtr->edges.begin() ; ie < vertWalkPtr->edges.end(); ie++ ) {
-            edgeWalkPtr = *ie;
-            //	Dont want duplicate edges in listing
-            if (edgeWalkPtr->getSource(NULL) == vertWalkPtr) {
-                edgeWalkPtr->inTree = false;
-                v.push_back(edgeWalkPtr);
-            }
-        }
-        vertWalkPtr = vertWalkPtr->pNextVert;
-    }
+	populateVector(g, &v);
     //	Sort edges in ascending order based upon pheromone level
     sort(v.begin(), v.end(), asc_cmp_plevel);
     //	Select 5n edges from the end of v( the highest pheromones edges) and put them into c.
-    for (unsigned int i = 0; i < CAN_SIZE; i++) {
-        if (v.empty()) {
-            break;
-        }
-        c.push_back(v.back());
-        v.pop_back();
-    }
+	getCandidateSet(&v,&c,CAN_SIZE);
     //	Sort edges in descending order based upon cost
     sort(c.begin(), c.end(), des_cmp_cost);
     //  Fill vector of Hubs
@@ -408,68 +379,9 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
         hubs[index]->lenPath = 0;
         vert = vert->pNextVert;
     }
-    heapifyHubs(hubs, c, numEdges, heap);
-    //  Now get hubs 
-    while(treeCount != MAX_TREE_SIZE && !isEmpty) {
-        if(heap->topSize() != 0) {
-          //  cout << "while, treecount: " << treeCount << ", numHubs: " << numHubs << ", numEdges: " << numEdges << endl;
-            //  Get highest degree v to make our initial hub (should be top of heap)
-            highHub = heap->deleteMax();
-           // cout << "Found new HUB: id: "<< highHub->vertId <<", #edges: " << highHub->edges.size() << endl; 
-            //  Add all edges in highhub to tree.
-            for(iedge1 = highHub->edges.begin(); iedge1 < highHub->edges.end(); iedge1++) {
-                pEdge = *iedge1;
-                //highHub->vert->inTree = true;
-               // cout << "tyring to add edge: " << pEdge->getDestination(NULL)->data << "-" << pEdge->getSource(NULL)->data << endl;
-                if(!pEdge->inTree && treeCount < MAX_TREE_SIZE && !(pEdge->getDestination(NULL)->inTree == true || pEdge->getSource(NULL)->inTree == true)) {
-                    temp.push(pEdge);
-                }
-            }
-            if(!temp.empty()) {
-                numHubs++;
-                highHub->lenPath = 1;
-                treeHubs.push_back(highHub);
-                highHub->inTree = true;
-                added = true;
-            }
-            while(!temp.empty() && treeCount < MAX_TREE_SIZE) {
-                pEdge = temp.top();
-                temp.pop();
-                pEdge->getDestination(NULL)->inTree = true;
-                pEdge->getSource(NULL)->inTree = true;
-                pEdge->inTree = true;
-                tree.push_back(pEdge);
-                treeCount++;
-               // cout << "added edge\n";
-            }
-            added = false;
-            //  Get rid of edges that are already in tree or that would cause a loop
-            for(iedge1 = highHub->edges.begin(); iedge1 < highHub->edges.end(); iedge1++) {
-                pEdge = *iedge1;
-                //  Update Source Vertex
-                h = hubs[pEdge->getSource(NULL)->data - 1];
-                if(h->vertId != highHub->vertId) {
-                    numEdges -= h->edges.size();
-                    h->edges.clear();
-                    h->inTree = true;
-                }
-                //Update Destination
-                h = hubs[pEdge->getDestination(NULL)->data - 1];
-                if(h->vertId != highHub->vertId) {
-                    numEdges -= h->edges.size();
-                    h->edges.clear();
-                    h->inTree = true;
-                }
-            }
-            //  delete highHub edges
-            highHub->edges.clear();
-            //  Update Heap
-            heap->updateHeap();
-        } else {
-            isEmpty = replenish(c, v, CAN_SIZE);
-            heapifyHubs(hubs, c, numEdges, heap);
-        }
-    }
+    heapifyHubs(&hubs, &c, numEdges, heap);
+    //  Now get hubs
+	getHubs(g, heap, &v, &c, &tree, &hubs, &treeHubs, MAX_TREE_SIZE, CAN_SIZE);
     //	Now that we have our hubs get vertices not yet in tree
     for(ihubs1 = hubs.begin(); ihubs1 < hubs.end(); ihubs1++) {
         h = *ihubs1;
@@ -479,14 +391,6 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
         }
     }	
     sort(treeHubs.begin(), treeHubs.end(), asc_hub );
-    // debug
- //   cout << "Here are the hubs we used: ";
- //   for(ihubs1 = treeHubs.begin(); ihubs1 < treeHubs.end(); ihubs1++) {
-  //      h = *ihubs1;
-  //      cout << h->vertId << ", ";
-  //  }
-  //  cout << endl;
-    //debug
     //	Now lets get the possible connections for them all.
     for(unsigned int i = 0; i < treeHubs.size(); i++) {
         v1 = treeHubs[i]->vert;
@@ -503,11 +407,6 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
             }
         }
     }
-    // 	debug
-    //cout << endl << "Here are the Connectors we can use: " << endl;
-    //for_each(possConn.begin(), possConn.end(), printEdge);
-   // cout << "END" << endl << endl << endl;
-    //	debug
     Graph* gHub = new Graph();
         //  add all vertices
     for(ihubs1 = treeHubs.begin(); ihubs1 < treeHubs.end(); ihubs1++) {
@@ -527,6 +426,116 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     treeHubs.clear();
     //  Return the tree
     return tree;
+}
+
+void getCandidateSet(vector<Edge*> *v, vector<Edge*> *c, unsigned const int & CAN_SIZE) {
+	for (unsigned int i = 0; i < CAN_SIZE; i++) {
+        if (v->empty()) {
+            break;
+        }
+        c->push_back(v->back());
+        v->pop_back();
+    }
+	return;
+}
+
+void getHubs(Graph* g, BinaryHeap* heap, vector<Edge*> *v, vector<Edge*> *c, vector<Edge*> *tree, vector<Hub*> *hubs, vector<Hub*> *treeHubs, const unsigned int & MAX_TREE_SIZE, const unsigned int & CAN_SIZE) {
+	//	Local Variables
+	unsigned int treeCount = 0;	
+	stack<Edge*> temp;
+	int numEdges = 0;
+	Hub  *h;
+	Edge *pEdge;
+	int numHubs = 0;
+	vector<Edge*>::iterator iedge1, iedge2, iedge3, ie;
+	vector<Hub*>::iterator ihubs1, ihubs2;
+	Hub *highHub = NULL;
+	bool added = false, isEmpty = false;
+
+	//	Logic
+	while(treeCount != MAX_TREE_SIZE && !isEmpty) {
+        if(heap->topSize() != 0) {
+          //  cout << "while, treecount: " << treeCount << ", numHubs: " << numHubs << ", numEdges: " << numEdges << endl;
+            //  Get highest degree v to make our initial hub (should be top of heap)
+            highHub = heap->deleteMax();
+           // cout << "Found new HUB: id: "<< highHub->vertId <<", #edges: " << highHub->edges.size() << endl; 
+            //  Add all edges in highhub to tree.
+            for(iedge1 = highHub->edges.begin(); iedge1 < highHub->edges.end(); iedge1++) {
+                pEdge = *iedge1;
+                //highHub->vert->inTree = true;
+               // cout << "tyring to add edge: " << pEdge->getDestination(NULL)->data << "-" << pEdge->getSource(NULL)->data << endl;
+                if(!pEdge->inTree && treeCount < MAX_TREE_SIZE && !(pEdge->getDestination(NULL)->inTree == true || pEdge->getSource(NULL)->inTree == true)) {
+                    temp.push(pEdge);
+                }
+            }
+            if(!temp.empty()) {
+                numHubs++;
+                highHub->lenPath = 1;
+                treeHubs->push_back(highHub);
+                highHub->inTree = true;
+                added = true;
+            }
+            while(!temp.empty() && treeCount < MAX_TREE_SIZE) {
+                pEdge = temp.top();
+                temp.pop();
+                pEdge->getDestination(NULL)->inTree = true;
+                pEdge->getSource(NULL)->inTree = true;
+                pEdge->inTree = true;
+                tree->push_back(pEdge);
+                treeCount++;
+               // cout << "added edge\n";
+            }
+            added = false;
+            //  Get rid of edges that are already in tree or that would cause a loop
+            for(iedge1 = highHub->edges.begin(); iedge1 < highHub->edges.end(); iedge1++) {
+                pEdge = *iedge1;
+                //  Update Source Vertex
+                h = (*hubs)[pEdge->getSource(NULL)->data - 1];
+                if(h->vertId != highHub->vertId) {
+                    numEdges -= h->edges.size();
+                    h->edges.clear();
+                    h->inTree = true;
+                }
+                //Update Destination
+                h = (*hubs)[pEdge->getDestination(NULL)->data - 1];
+                if(h->vertId != highHub->vertId) {
+                    numEdges -= h->edges.size();
+                    h->edges.clear();
+                    h->inTree = true;
+                }
+            }
+            //  delete highHub edges
+            highHub->edges.clear();
+            //  Update Heap
+            heap->updateHeap();
+        } else {
+            isEmpty = replenish(c, v, CAN_SIZE);
+            heapifyHubs(hubs, c, numEdges, heap);
+        }
+    }
+}
+
+void populateVector(Graph* g, vector<Edge*> *v) {
+	//	Local Variables
+	Vertex* vertWalkPtr;
+	vector<Edge*>::iterator ie;
+	Edge* edgeWalkPtr;
+	//	Logic
+	vertWalkPtr = g->getFirst();
+    while (vertWalkPtr) {
+        vertWalkPtr->treeDegree = 0;
+        vertWalkPtr->inTree = false;
+        vertWalkPtr->isConn = false;
+        for ( ie = vertWalkPtr->edges.begin() ; ie < vertWalkPtr->edges.end(); ie++ ) {
+            edgeWalkPtr = *ie;
+            //	Dont want duplicate edges in listing
+            if (edgeWalkPtr->getSource(NULL) == vertWalkPtr) {
+                edgeWalkPtr->inTree = false;
+                v->push_back(edgeWalkPtr);
+            }
+        }
+        vertWalkPtr = vertWalkPtr->pNextVert;
+    }
 }
 
 void connectHubs(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
@@ -626,22 +635,22 @@ int testDiameter(Graph* g) {
     return max;
 }
 
-bool replenish(vector<Edge*> c, vector<Edge*> v, const unsigned int & CAN_SIZE) {
-	if(v.empty()) {
+bool replenish(vector<Edge*> *c, vector<Edge*> *v, const unsigned int & CAN_SIZE) {
+	if(v->empty()) {
 		return false;
 	}
 	for (unsigned int j = 0; j < CAN_SIZE; j++) {
-        if (v.empty()) {
+        if (v->empty()) {
 			break;
         }
-        c.push_back(v.back());
-        v.pop_back();
+        c->push_back(v->back());
+        v->pop_back();
     }
-    sort(c.begin(), c.end(), des_cmp_cost);
+    sort(c->begin(), c->end(), des_cmp_cost);
 	return true;
 }
 
-void heapifyHubs(vector<Hub*> hubs, vector<Edge*> c, int & numEdges, BinaryHeap* heap) {
+void heapifyHubs(vector<Hub*> *hubs, vector<Edge*> *c, int & numEdges, BinaryHeap* heap) {
     //cout << "in foo\n";
     vector<Edge*>::iterator iedge1;
     vector<Hub*>::iterator ihubs2;
@@ -649,19 +658,19 @@ void heapifyHubs(vector<Hub*> hubs, vector<Edge*> c, int & numEdges, BinaryHeap*
     Hub* pHub;
     int vertIndex;
     //  Get Degree of each vertice in candidate set
-    for(iedge1 = c.begin(); iedge1 < c.end(); iedge1++) {
+    for(iedge1 = c->begin(); iedge1 < c->end(); iedge1++) {
         pEdge = *iedge1;
         //  Handle Source
         vertIndex = pEdge->getSource(NULL)->data; // the vertice number uniquely identifies each vertice
-        hubs[vertIndex - 1]->edges.push_back(pEdge);
+        (*hubs)[vertIndex - 1]->edges.push_back(pEdge);
         //  Handle Destination
         vertIndex = pEdge->getDestination(NULL)->data; // the vertice number uniquely identifies each vertice
-        hubs[vertIndex - 1]->edges.push_back(pEdge);
+        (*hubs)[vertIndex - 1]->edges.push_back(pEdge);
         numEdges += 2;
     }
-    c.clear();
+    c->clear();
     //  First get rid of vertices with zero edges from candidate set
-    for(ihubs2 = hubs.begin(); ihubs2 < hubs.end(); ihubs2++) {
+    for(ihubs2 = hubs->begin(); ihubs2 < hubs->end(); ihubs2++) {
         pHub = *ihubs2;
         if(pHub->edges.size() != 0) {
             heap->insert(pHub);
