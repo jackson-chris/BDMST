@@ -1,6 +1,6 @@
+//	File: bdmst.cxx
 //	Author: Christopher Lee Jackson & Jason Jones
-//  Description:
-
+//  Description: This is our implementation of our ant based algorithm to aproximate the BDMST problem.
 
 #include <iostream>
 #include <iomanip>
@@ -61,11 +61,10 @@ void updatePheromonesGlobal(Graph *g, vector<Edge*> best, bool improved);
 void printEdge(Edge* e);
 void resetItems(Graph* g, processFile p);
 void compute(Graph* g, int d, processFile p);
-void foo(vector<Hub*> hubs, vector<Edge*> c, int & numEdges, BinaryHeap* heap);
-bool replinish(vector<Edge*> c, vector<Edge*> v, const unsigned int & CAN_SIZE);
-void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d);
+void heapifyHubs(vector<Hub*> hubs, vector<Edge*> c, int & numEdges, BinaryHeap* heap);
+bool replenish(vector<Edge*> c, vector<Edge*> v, const unsigned int & CAN_SIZE);
+void connectHubs(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d);
 int testDiameter(Graph* g);
-int testDiam(vector<Edge*> best, Edge* pEdge);
 Edge* remEdge(vector<Edge*> best);
 int find(vector<int> UF, int start);
 int universalSearch(Graph* g, int start);
@@ -179,6 +178,7 @@ void resetItems(Graph* g, processFile p) {
 	minCost = std::numeric_limits<double>::infinity();
 	p.reset();
 }
+
 vector<Edge*> AB_DBMST(Graph *g, int d) {
 	//	Local Declerations
 	double bestCost = std::numeric_limits<double>::infinity();
@@ -368,6 +368,8 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     Hub *highHub = NULL;
     bool added = false, isEmpty = false;
     BinaryHeap* heap = new BinaryHeap(g->getCount());
+
+	//	Logic
     //	Put all edges into a vector
     vertWalkPtr = g->getFirst();
     while (vertWalkPtr) {
@@ -406,7 +408,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
         hubs[index]->lenPath = 0;
         vert = vert->pNextVert;
     }
-    foo(hubs, c, numEdges, heap);
+    heapifyHubs(hubs, c, numEdges, heap);
     //  Now get hubs 
     while(treeCount != MAX_TREE_SIZE && !isEmpty) {
         if(heap->topSize() != 0) {
@@ -464,8 +466,8 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
             //  Update Heap
             heap->updateHeap();
         } else {
-            isEmpty = replinish(c, v, CAN_SIZE);
-            foo(hubs, c, numEdges, heap);
+            isEmpty = replenish(c, v, CAN_SIZE);
+            heapifyHubs(hubs, c, numEdges, heap);
         }
     }
     //	Now that we have our hubs get vertices not yet in tree
@@ -517,7 +519,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
         pEdge = *iedge1;
         gHub->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
     }
-    prim(gHub, &tree, treeCount, d - 2);
+    connectHubs(gHub, &tree, treeCount, d - 2);
     //  Now that we are done cleanup
     delete gHub;
     hubs.clear();
@@ -527,7 +529,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     return tree;
 }
 
-void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
+void connectHubs(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
     vector<Edge*>::iterator iEdge;
     Vertex *pVert, *pVertChk;
     Edge *pEdge, *pEdgeMin;
@@ -606,7 +608,6 @@ void prim(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
             	pEdgeMin->usable = false;
         }
     }
-    //cout << endl << endl << endl;
 }
 
 int find(vector<int> UF, int start){
@@ -625,47 +626,7 @@ int testDiameter(Graph* g) {
     return max;
 }
 
-int testDiam(vector<Edge*> best, Edge* pEdge){
-	cout << "testDiam" << endl;
-	Graph* gTest = new Graph();
-	Edge* e;
-	vector<Edge*>::iterator iedge;
-        //  add all vertices
-    Vertex* pVert = gTest->getFirst();
-    int start, diameter;
-    while(pVert) {
-        if(pVert->inTree)
-        gTest->insertVertex(pVert->data);
-        pVert = pVert->pNextVert;
-    }
-         //  Now add edges to graph.
-    for(iedge = best.begin(); iedge < best.end(); iedge++) {
-        e = *iedge;
-        gTest->insertEdge(e->getSource(NULL)->data, e->getDestination(NULL)->data, e->weight, e->pLevel);
-    }
-	gTest->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
-	
-	diameter = testDiameter(gTest);
-	
-	delete gTest;
-	
-	return diameter;
-}
-
-Edge* remEdge(vector<Edge*> best){
-	cout << "remEdge" << endl;
-	int x = rand() % best.size();
-	int size = best.size();
-	Edge* randPtr = best[x];
-	Edge* tmp;
-	tmp = best[size - 1];
-	best[size - 1] = best[x];
-	best[x] = tmp;
-	best.pop_back();
-	return randPtr;
-}
-
-bool replinish(vector<Edge*> c, vector<Edge*> v, const unsigned int & CAN_SIZE) {
+bool replenish(vector<Edge*> c, vector<Edge*> v, const unsigned int & CAN_SIZE) {
 	if(v.empty()) {
 		return false;
 	}
@@ -680,7 +641,7 @@ bool replinish(vector<Edge*> c, vector<Edge*> v, const unsigned int & CAN_SIZE) 
 	return true;
 }
 
-void foo(vector<Hub*> hubs, vector<Edge*> c, int & numEdges, BinaryHeap* heap) {
+void heapifyHubs(vector<Hub*> hubs, vector<Edge*> c, int & numEdges, BinaryHeap* heap) {
     //cout << "in foo\n";
     vector<Edge*>::iterator iedge1;
     vector<Hub*>::iterator ihubs2;
@@ -711,7 +672,7 @@ void foo(vector<Hub*> hubs, vector<Edge*> c, int & numEdges, BinaryHeap* heap) {
 void move(Graph *g, Ant *a) {
 	Vertex* vertWalkPtr;
 	vertWalkPtr = a->location;
-	Edge* edgeWalkPtr;
+	Edge* edgeWalkPtr = NULL;
 	int numMoves = 0;
 	vector<Edge*>::iterator e;
 	double sum = 0.0;
