@@ -241,6 +241,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 			//cerr << "FOUND NEW BEST at cycle: " << totalCycles <<endl;
 			best = current;
 			bestCost = treeCost;
+            newBest=true;
 			if (totalCycles != 1)
 				cycles = 0;
 		} 
@@ -249,6 +250,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 			    updatePheromonesGlobal(g, &best, false);
 		    } else 
 			    updatePheromonesGlobal(g, &best, true);
+            newBest = false;
 		}
 		if (totalCycles % 500 == 0) {
 			evap_factor *= P_UPDATE_EVAP; 
