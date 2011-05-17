@@ -180,6 +180,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 	//	Local Declerations
 	double bestCost = std::numeric_limits<double>::infinity();
 	double treeCost = 0;
+    bool newBest = false;
 	const int s = 75;
 	vector<Edge*> best, current;
 	Vertex *vertWalkPtr;
@@ -244,9 +245,10 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 				cycles = 0;
 		} 
 		if (cycles % 100 == 0) {
-			updatePheromonesGlobal(g, &best, false);
-		} else {
-			updatePheromonesGlobal(g, &best, true);
+            if(newBest){
+			    updatePheromonesGlobal(g, &best, false);
+		    } else 
+			    updatePheromonesGlobal(g, &best, true);
 		}
 		if (totalCycles % 500 == 0) {
 			evap_factor *= P_UPDATE_EVAP; 
