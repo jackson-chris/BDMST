@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# By: Christopher Jackson
+NUM_RUNS=10
+cd ../output/
+#Clean up any old stat files
+rm stats/*
+#done cleaning up
+
+for file in *.out
+	do
+	t=0
+	touch stats/${file}.stat
+	cat $file | grep -m 5 INFO >> stats/${file}.stat
+	num_inst=`cat $file | grep -m 1 "INFO: num_inst: " | awk '{print $3}'`
+	echo >> stats/${file}.stat
+	for time in `cat $file | grep real | awk '{print $2}'`
+		do
+		t=$t+$time
+	done
+	total=`echo $t | bc`
+	final=`echo "scale=4; $total / ($num_inst * $NUM_RUNS)" | bc -l`
+	echo "The average real time for each instance was $final seconds." >> stats/${file}.stat
+	c=0
+	for cost in `cat $file | grep "RESULT: Cost: " | awk '{print $3}'`
+		do
+		c=$c+$cost
+	done
+	ctotal=`echo $c | bc`
+	echo "The average cost was $ctotal" >> stats/${file}.stat
+done
+

@@ -59,7 +59,7 @@ void updatePheromonesPerEdge(Graph *g);
 void updatePheromonesGlobal(Graph *g, vector<Edge*> *best, bool improved);
 void printEdge(Edge* e);
 void resetItems(Graph* g, processFile p);
-void compute(Graph* g, int d, processFile p);
+void compute(Graph* g, int d, processFile p, int instance);
 void heapifyHubs(vector<Hub*> *hubs, vector<Edge*> *c, int & numEdges, BinaryHeap* heap);
 bool replenish(vector<Edge*> *c, vector<Edge*> *v, const unsigned int & CAN_SIZE);
 void connectHubs(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d);
@@ -95,19 +95,20 @@ int main( int argc, char *argv[])
     assert(inFile.is_open());
     //  Process input file and get resulting graph
     Graph* g;
-    cout << "Parameters: " << endl;
-    cout << "P_UPDATE_EVAP: " << P_UPDATE_EVAP << ", P_UPDATE_ENHA: " << P_UPDATE_ENHA << ", Tabu_modifier: " << TABU_MODIFIER << endl;
-    cout << "max_cycles: " << MAX_CYCLES << ", evap_factor: " << evap_factor << ", enha_factor: " << enha_factor << endl;
-    cout << "Input file: " << fileName << ", Diameter Constraint: " << d << endl << endl;
+    cout << "INFO: Parameters: " << endl;
+    cout << "INFO: P_UPDATE_EVAP: " << P_UPDATE_EVAP << ", P_UPDATE_ENHA: " << P_UPDATE_ENHA << ", Tabu_modifier: " << TABU_MODIFIER << endl;
+    cout << "INFO: max_cycles: " << MAX_CYCLES << ", evap_factor: " << evap_factor << ", enha_factor: " << enha_factor << endl;
+    cout << "INFO: Input file: " << fileName << ", Diameter Constraint: " << d << endl << endl;
     if(fileType[0] == 'e') {
 		//cout << "USING e file type" << endl;
         inFile >> numInst;
-		cout << numInst << endl;
+		cout << "INFO: num_inst: " << numInst << endl;
+		cout << "INFO: ";
         for(int i = 0; i < numInst; i++) {
             //cout << "Instance num: " << i+1 << endl;
             g = new Graph();
             p.processEFile(g, inFile);
-            compute(g, d, p);
+            compute(g, d, p, i);
             resetItems(g, p);
         }
 		
@@ -119,7 +120,7 @@ int main( int argc, char *argv[])
             //cout << "Instance num: " << i+1 << endl;
             g = new Graph();
             p.processRFile(g, inFile);
-            compute(g, d, p);
+            compute(g, d, p, i);
             resetItems(g, p);
         }
 		
@@ -128,13 +129,13 @@ int main( int argc, char *argv[])
 		//cout << "USING o file type" << endl;
         g = new Graph();
 		p.processFileOld(g, inFile);
-        compute(g, d, p);
+        compute(g, d, p, 0);
 	}
     
 	return 0;
 }
 
-void compute(Graph* g, int d, processFile p) {
+void compute(Graph* g, int d, processFile p, int i) {
 	maxCost = p.getMax();
 	minCost = p.getMin();
 	if((unsigned int) d > g->getCount()) {
@@ -145,6 +146,7 @@ void compute(Graph* g, int d, processFile p) {
     //cout << "Size of best: " << best.size() << endl;
 	//sort(best.begin(), best.end(), asc_src);
     //cout << "Best Tree num edges: " << best.size() << endl;
+	cout << "Instance number: " << i << endl;
 	for_each(best.begin(), best.end(), printEdge);
 }
 
@@ -171,6 +173,7 @@ bool asc_hub(Hub* a, Hub* b) {
 }
 
 void printEdge(Edge* e) {
+	cout << "RESULT: ";
 	cout << e->getSource(NULL)->data << " " << e->getDestination(NULL)->data << " " << e->weight << " " << e->pLevel << endl;
 }
 
@@ -279,10 +282,8 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         pEdge = *iedge1;
         gTest->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
     }
-    cout << "Diameter: " << endl;
-    cout << testDiameter(gTest) << endl;
-    cout << "Cost: " << endl;
-	cout << bestCost << endl;
+    cout << "RESULT: Diameter: " << testDiameter(gTest) << endl;
+    cout << "RESULT: Cost: " << bestCost << endl;
 	
 	//	Reset items
 	ants.clear();

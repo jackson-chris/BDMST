@@ -13,13 +13,17 @@ for input in *10.txt
     		out="out_${input}_d${d}.out"
     		touch ../../output/$out
 			cd ../../
-    		(time ./main input/$class/$input $c $d >> output/$out) 2>> output/$out
+    		(time -p ./main input/$class/$input $c $d >> output/$out) 2>> output/$out
 			cd input/$class/
     	done
 	done
 done
 }
 
+#Clean up any old ouput files
+cd ../output
+rm *
+#Now that it is clean run all inputs
 c="e"
 class="estein"
 doClass
