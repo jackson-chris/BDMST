@@ -4,3 +4,12 @@ We are working on an ant based algorithm to approximate solutions to
 the BDMST problem. 
 
 Authors: Christopher Jackson, Jason Jones
+
+
+To Do:
+
+-Format output so we can easily determine statistics using another script.
+-Create script to gather statistics.
+-Gather information from prior research regarding run times and best results to compare to our findings.
+-Code optimization functions.
+-Gather what diameter bounds we should be using.

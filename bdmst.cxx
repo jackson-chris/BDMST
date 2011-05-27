@@ -102,6 +102,7 @@ int main( int argc, char *argv[])
     if(fileType[0] == 'e') {
 		//cout << "USING e file type" << endl;
         inFile >> numInst;
+		cout << numInst << endl;
         for(int i = 0; i < numInst; i++) {
             //cout << "Instance num: " << i+1 << endl;
             g = new Graph();
