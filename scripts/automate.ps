@@ -2,18 +2,29 @@
 
 # By: Christopher Jackson
 
-doEstein() {
-for filename in ../input/estein/*
+doClass() {
+for input in ../input/$class/*
 	for i in 1 2 3 4 5 6 7 8 9 10
 		do
-    	for d in 4 5 6 7 8 10 20
+    	for d in 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
     		do
     		out="out_${input}_i${i}_d${d}.out"
     		touch $out
-    		(time ./main input/$input e $d > output/$out) 2>> output/$out
+    		(time ./main input/$input $c $d > output/$out) 2>> output/$out
     	done
 	done
 done
 }
-input="estein500.txt"
-doStuff
+
+c="e"
+class="estein"
+doClass
+class="euclidean"
+doClass
+c="o"
+class="other"
+doClass
+c="r"
+class="random"
+doClass
+
