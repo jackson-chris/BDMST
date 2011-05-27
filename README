@@ -1,1 +1,6 @@
-Hello World. Will update this later.
+BDMST - Bounded Diameter Minimum Spanning Tree
+
+We are working on an ant based algorithm to approximate solutions to
+the BDMST problem. 
+
+Authors: Christopher Jackson, Jason Jones
