@@ -8,7 +8,7 @@ Authors: Christopher Jackson, Jason Jones
 
 To Do:
 
--Format output so we can easily determine statistics using another script.
+DONE -Format output so we can easily determine statistics using another script.
 -Create script to gather statistics.
 -Gather information from prior research regarding run times and best results to compare to our findings.
 -Code optimization functions.

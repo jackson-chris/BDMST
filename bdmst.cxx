@@ -137,6 +137,10 @@ int main( int argc, char *argv[])
 void compute(Graph* g, int d, processFile p) {
 	maxCost = p.getMax();
 	minCost = p.getMin();
+	if((unsigned int) d > g->getCount()) {
+		cout << "No need to run this diameter test. Running MST will give you solution, since diameter is greater than number of nodes." << endl;
+		exit(1);
+	}
 	vector<Edge*> best = AB_DBMST(g, d);
     //cout << "Size of best: " << best.size() << endl;
 	//sort(best.begin(), best.end(), asc_src);
