@@ -2,12 +2,17 @@
 
 # By: Christopher Jackson
 
+size=10
 doClass() {
 cd ../input/$class/
-for input in *10.txt
+for input in *$size.txt
 	do
 	for d in 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 30 40 45 60 100
     	do
+        if [ $d -ge $size ]
+        then
+            break
+        fi
 		for i in 1 2 3 4 5 6 7 8 9 10
 			do
     		out="out_${input}_d${d}.out"
@@ -22,7 +27,7 @@ done
 
 #Clean up any old ouput files
 cd ../output
-rm *
+rm *.out
 #Now that it is clean run all inputs
 c="e"
 class="estein"

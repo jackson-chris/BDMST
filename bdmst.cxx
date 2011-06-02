@@ -37,6 +37,7 @@ const double P_UPDATE_ENHA = 1.05;
 const int TABU_MODIFIER = 5;
 const int MAX_CYCLES = 2500; // change back to 2500
 
+int instance = 0;
 double loopCount = 0;
 double evap_factor = .65;
 double enha_factor = 1.5;
@@ -108,6 +109,7 @@ int main( int argc, char *argv[])
             //cout << "Instance num: " << i+1 << endl;
             g = new Graph();
             p.processEFile(g, inFile);
+            instance++;
             compute(g, d, p, i);
             resetItems(g, p);
         }
@@ -283,7 +285,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         gTest->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
     }
     cout << "RESULT: Diameter: " << testDiameter(gTest) << endl;
-    cout << "RESULT: Cost: " << bestCost << endl;
+    cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
 	
 	//	Reset items
 	ants.clear();

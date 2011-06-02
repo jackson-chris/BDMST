@@ -22,11 +22,16 @@ for file in *.out
 	final=`echo "scale=4; $total / ($num_inst * $NUM_RUNS)" | bc -l`
 	echo "The average real time for each instance was $final seconds." >> stats/${file}.stat
 	c=0
-	for cost in `cat $file | grep "RESULT: Cost: " | awk '{print $3}'`
-		do
-		c=$c+$cost
-	done
-	ctotal=`echo $c | bc`
-	echo "The average cost was $ctotal" >> stats/${file}.stat
+    for (( i = 1 ; i <= num_inst; i++ ))
+    do
+	    for cost in `cat $file | grep "RESULT$i: Cost: " | awk '{print $3}'`
+		    do
+		    c=$c+$cost
+	    done
+        ctotal=`echo $c | bc`
+        cavg=`echo "scale=4; $ctotal / $NUM_RUNS" | bc -l`
+        c=0
+        echo "The average cost for instance $i was $cavg" >> stats/${file}.stat
+    done
 done
 
