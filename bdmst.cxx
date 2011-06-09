@@ -219,7 +219,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 		vertWalkPtr = vertWalkPtr->pNextVert;
 	}
 	while (totalCycles <= 10000 && cycles <= MAX_CYCLES) { 
-		if(totalCycles % 25 == 0) 
+		//if(totalCycles % 25 == 0) 
 			//cerr << "CYCLE " << totalCycles << endl;
 		//	Exploration Stage
 		for (int step = 1; step <= s; step++) {
