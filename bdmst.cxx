@@ -101,10 +101,10 @@ int main( int argc, char *argv[])
     cout << "INFO: max_cycles: " << MAX_CYCLES << ", evap_factor: " << evap_factor << ", enha_factor: " << enha_factor << endl;
     cout << "INFO: Input file: " << fileName << ", Diameter Constraint: " << d << endl << endl;
     if(fileType[0] == 'e') {
-		//cout << "USING e file type" << endl;
+        //cout << "USING e file type" << endl;
         inFile >> numInst;
-		cout << "INFO: num_inst: " << numInst << endl;
-		cout << "INFO: ";
+        cout << "INFO: num_inst: " << numInst << endl;
+        cout << "INFO: ";
         for(int i = 0; i < numInst; i++) {
             //cout << "Instance num: " << i+1 << endl;
             g = new Graph();
