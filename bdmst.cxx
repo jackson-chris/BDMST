@@ -202,7 +202,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 	//	Assign one ant to each vertex
 	vertWalkPtr = g->getFirst();
 	for (unsigned int i = 0; i < g->getCount(); i++) {
-		Ant *a = new Ant;
+		a = new Ant;
 		a->data = i +1;
 		a->location = vertWalkPtr;
 		a->visited = new vector<int>(g->getCount(), 0);
