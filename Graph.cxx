@@ -36,7 +36,6 @@ Vertex* Edge::getOtherSide(Vertex* loc) {
         return destination;
 }
 
-
 Vertex* Edge::getDestination(Vertex* loc) {
 	if(!loc)
 		return destination;
@@ -298,7 +297,6 @@ double Graph::insertEdge(int fromKey, int toKey) {
 	return weight;
 }
 
-
 unsigned int Graph::getCount() {
     return count;
 }
@@ -321,60 +319,6 @@ void Graph::print() {
     }
 }
 
-void Graph::top_search(Vertex *pVert, vector<Vertex*> *top) {
-    vector<Edge*>::iterator iEdge;
-    Edge* pEdge;
-    pVert->visited = 1;
-    for(iEdge = pVert->edges.begin(); iEdge < pVert->edges.end(); iEdge++) {
-        pEdge = *iEdge;
-        if(pEdge->getDestination(NULL)->visited == 0) {
-            top_search(pEdge->getDestination(NULL), top);
-        }
-    }
-    top->push_back(pVert);
-}
-
-void Graph::topSort(vector<Vertex*> *top) {
-    Vertex* pVert = first;
-    while(pVert) {
-        pVert->visited = 0;
-        pVert = pVert->pNextVert;
-    }
-    pVert = first;
-    while(pVert) {
-        if(pVert->visited == 0) {
-            top_search(pVert, top);
-        }
-        pVert = pVert->pNextVert;
-    }
-    
-}
-/*
-void Graph::UniversalSearch() {
-    Vertex* vertWalkPtr = first;
-    while(vertWalkPtr) {
-        vertWalkPtr->visited = false;
-        vertWalkPtr = vertWalkPtr->pNextVert;
-    }
-    vertWalkPtr = first;
-    while(vertWalkPtr) {
-        if(vertWalkPtr->visited == 0) {
-            q.push(vertWalkPtr);
-            vertWalkPtr->visited = true;
-            while(!q.empty()) {
-                v = q.front();
-                q.pop();
-                for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
-                    eWalkPtr = *e;
-                    if(eWalkPtr->getDestination(NULL)->visited == false) {
-                        q.push(eWalkPtr->getDestination(NULL));
-                    }
-                }
-            }
-        }
-    }
-}
-*/
 int Graph::BFS(Vertex* pVert) {
     int i = 0;
     Edge *eWalkPtr;
