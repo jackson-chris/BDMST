@@ -88,9 +88,8 @@ public:
 
 class Graph{
 private:
-    unsigned int count;
+    unsigned int numNodes;
     Vertex *first;
-	void top_search(Vertex *pVert, vector<Vertex*> *top);
 public:
     Graph();
     ~Graph();
@@ -100,13 +99,12 @@ public:
     double insertEdge(int fromKey, int toKey);
     int insertVertex(int dataIn, double x, double y);
     bool emptyGraph();
-    unsigned int getCount();
+    unsigned int getNumNodes();
 	void print();
     void print_search(Vertex *vertPtr);
 	Vertex* getFirst();
 	Vertex* getRand();
     double getVerticeWeight(Vertex *vertPtr);
-    void topSort(vector<Vertex*> *top);
     int BFS(Vertex* pVert);
     Vertex* BFS_2(Vertex* pVert);
 

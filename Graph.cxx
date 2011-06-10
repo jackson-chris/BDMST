@@ -53,7 +53,7 @@ Vertex* Edge::getDestination(Vertex* loc) {
 
 
 Graph::Graph() {
-    count = 0;
+    numNodes = 0;
     first = NULL;
 }
 
@@ -77,7 +77,7 @@ Vertex* Graph::getFirst() {
 }
 
 Vertex* Graph::getRand() {
-	int x = rand() % count;
+	int x = rand() % numNodes;
 	Vertex* randPtr = first;
 	for(int i = 0; i < x; i++){
 		randPtr = randPtr->pNextVert;
@@ -86,7 +86,7 @@ Vertex* Graph::getRand() {
 }
 
 bool Graph::emptyGraph() {
-    return (count == 0);
+    return (numNodes == 0);
 }
 
 
@@ -108,7 +108,7 @@ int Graph::insertVertex(int dataIn, Hub* hub) {
         newPtr->depth = -1;
         newPtr->pHub = hub;
        // newPtr->edges = new vector<Edge*>;
-        count++;
+        numNodes++;
     } else {
         //  Memory overflow
         return -1;
@@ -150,7 +150,7 @@ int Graph::insertVertex(int dataIn, double x, double y) {
         newPtr->x_coord = x;
         newPtr->y_coord = y;
        // newPtr->edges = new vector<Edge*>;
-        count++;
+        numNodes++;
     } else {
         //  Memory overflow
         return -1;
@@ -206,7 +206,7 @@ int Graph::deleteVertex(int dltKey) {
     } else {
         predPtr->pNextVert = walkPtr->pNextVert;
     }
-    count--;
+    numNodes--;
     delete walkPtr;
     return 1;
 }
@@ -297,8 +297,8 @@ double Graph::insertEdge(int fromKey, int toKey) {
 	return weight;
 }
 
-unsigned int Graph::getCount() {
-    return count;
+unsigned int Graph::getNumNodes() {
+    return numNodes;
 }
 
 void Graph::print() {

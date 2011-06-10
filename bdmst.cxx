@@ -136,7 +136,7 @@ int main( int argc, char *argv[]) {
 void compute(Graph* g, int d, processFile p, int i) {
     maxCost = p.getMax();
     minCost = p.getMin();
-    if((unsigned int) d > g->getCount()) {
+    if((unsigned int) d > g->getNumNodes()) {
         cout << "No need to run this diameter test. Running MST will give you solution, since diameter is greater than number of nodes." << endl;
         exit(1);
     }
@@ -197,11 +197,11 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
     Ant *a;
     //	Assign one ant to each vertex
     vertWalkPtr = g->getFirst();
-    for (unsigned int i = 0; i < g->getCount(); i++) {
+    for (unsigned int i = 0; i < g->getNumNodes(); i++) {
         a = new Ant;
         a->data = i +1;
         a->location = vertWalkPtr;
-        a->visited = new vector<int>(g->getCount(), 0);
+        a->visited = new vector<int>(g->getNumNodes(), 0);
         ants.push_back(a);
         //	Initialize pheremone level of each edge, and set pUdatesNeeded to zero
         for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
@@ -222,18 +222,18 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
             if (step == s/3 || step == (2*s)/3) {
                 updatePheromonesPerEdge(g);
             }
-            for (unsigned int j = 0; j < g->getCount(); j++) {
+            for (unsigned int j = 0; j < g->getNumNodes(); j++) {
                 a = ants[j];
                 move(g, a);
             }
             if ( step % TABU_MODIFIER == 0 ) {
-                for(unsigned int w = 0; w < g->getCount(); w++) {
-                    ants[w]->visited->assign(g->getCount(), 0); //  RESET VISITED FOR EACH ANT (TABU)
+                for(unsigned int w = 0; w < g->getNumNodes(); w++) {
+                    ants[w]->visited->assign(g->getNumNodes(), 0); //  RESET VISITED FOR EACH ANT (TABU)
                 }
             }
         }
-        for(unsigned int w = 0; w < g->getCount(); w++) {
-            ants[w]->visited->assign(g->getCount(), 0); //  RESET VISITED FOR EACH ANT
+        for(unsigned int w = 0; w < g->getNumNodes(); w++) {
+            ants[w]->visited->assign(g->getNumNodes(), 0); //  RESET VISITED FOR EACH ANT
         }
         updatePheromonesPerEdge(g);
         //	Tree Construction Stage
@@ -243,7 +243,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
             edgeWalkPtr = *ed;
             treeCost+=edgeWalkPtr->weight;
         }
-        if (treeCost < bestCost && (current.size() == g->getCount() - 1)) {
+        if (treeCost < bestCost && (current.size() == g->getNumNodes() - 1)) {
             //cerr << "FOUND NEW BEST at cycle: " << totalCycles <<endl;
             best = current;
             bestCost = treeCost;
@@ -369,9 +369,9 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     unsigned int treeCount = 0;
     vector<Edge*>::iterator iedge1, iedge2, iedge3, ie;
     vector<Hub*>::iterator ihubs1, ihubs2;
-    BinaryHeap* heap = new BinaryHeap(g->getCount());
-    const unsigned int MAX_TREE_SIZE = g->getCount() - 1;
-    unsigned const int CAN_SIZE = g->getCount();
+    BinaryHeap* heap = new BinaryHeap(g->getNumNodes());
+    const unsigned int MAX_TREE_SIZE = g->getNumNodes() - 1;
+    unsigned const int CAN_SIZE = g->getNumNodes();
     //	Logic
 
     //	Put all edges into a vector
@@ -384,7 +384,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     sort(c.begin(), c.end(), des_cmp_cost);
     //  Fill vector of Hubs
     vert = g->getFirst();
-    for(unsigned int index = 0; index < g->getCount(); index++) {
+    for(unsigned int index = 0; index < g->getNumNodes(); index++) {
         hubs.push_back(new Hub());
         hubs[index]->vertId = index + 1;
         hubs[index]->vert = vert;
