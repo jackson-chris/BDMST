@@ -75,6 +75,7 @@ public:
 	void setDestination(Vertex* d);
 	Vertex* getSource(Vertex* loc);
 	Vertex* getDestination(Vertex* loc);
+    Vertex* getOtherSide(Vertex* loc);
 };
 
 

@@ -29,6 +29,13 @@ Vertex* Edge::getSource(Vertex* loc) {
 		return destination;
 }
 
+Vertex* Edge::getOtherSide(Vertex* loc) {
+    if(loc->data == source->data)
+        return source;
+    else
+        return destination;
+}
+
 
 Vertex* Edge::getDestination(Vertex* loc) {
 	if(!loc)
