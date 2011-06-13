@@ -19,13 +19,14 @@ int Queue::back() {
 }
 
 void Queue::push(int x) {
-    if(full()) {
-        cerr << "Queue is full.";
-        exit -1;
-    }
     if(empty()) {
         size++;
         array[tail] = x;
+    }
+    else if (full()){
+        // size stays the same but the tail shifts along with the head.
+        array[(++tail)%max] = x;
+        head = (++head)%max;
     }
     else {
         size++;

@@ -9,11 +9,11 @@
 #include <algorithm>
 #include <vector>
 #include "Graph.cxx"
+#include "Queue.cxx"
 #include "BinaryHeap.h"
 #include <cmath>
 #include <cstring>
 #include <stack>
-#include <queue>
 #include <cstdlib>
 #include "processFile.h"
 
@@ -23,8 +23,7 @@ typedef struct {
     int data; // initial vertex ant started on
     int nonMove;
     Vertex *location;
-    vector<int> *visited;
-    queue<int> *v;
+    Queue visited;
 }Ant;
 
 typedef struct {
@@ -204,8 +203,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         a->data = i +1;
         a->nonMove = 0;
         a->location = vertWalkPtr;
-        a->visited = new vector<int>(g->getNumNodes(), 0);
-        a->v = new queue<Vertex*>;
+        a->visited = new Queue(TABU_MODIFIER);
         ants.push_back(a);
         //	Initialize pheremone level of each edge, and set pUdatesNeeded to zero
         for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
@@ -706,15 +704,16 @@ void heapifyHubs(vector<Hub*> *hubs, vector<Edge*> *c, int & numEdges, BinaryHea
 
 void move(Graph *g, Ant *a) {
     Vertex* vertWalkPtr;
+    Vertex* vDest;
     vertWalkPtr = a->location;
     Edge* edgeWalkPtr = NULL;
     int numMoves = 0;
-    int dest;
+    bool alreadyVisited;
     vector<Edge*>::iterator e;
     double sum = 0.0;
     vector<Range> edges;
     double value;
-    queue<int> antVisitedQueue;
+    Queue* antVisitedQueue;
     Range* current;
     vector<int> v = *a->visited;
     //	Determine Ranges for each edge
@@ -739,23 +738,28 @@ void move(Graph *g, Ant *a) {
             }
         }
         //  Check to see if the ant is stuck
-        antVisitedQueue = *a->v;
+        antVisitedQueue = a->v;
         if (a->nonMove > 4) {
-            while(!antVisitedQueue.empty()) {
-                antVisitedQueue.pop();
+            while(!antVisitedQueue->empty()) {
+                antVisitedQueue->pop();
             }
         }
         //	We have a randomly selected edge, if that edges hasnt already been visited by this ant traverse the edge
-            // this needs to be fixed
+        vDest = edgeWalkPtr->getDestination(vertWalkPtr);
+        alreadyVisited = false;
+        for(unsigned int i = 0; i < TABU_MODIFIER; i++) {
+            if( antVisitedQueue->array[i] == vDest->data ) {
+                // This ant has already visited this vertex
+                alreadyVisisted = true;
+                break;
+            }
         }
-        
-        if (*temp == 0) {
+        if (!alreadyVisited) {
             edgeWalkPtr->pUpdatesNeeded++;
-            a->location = edgeWalkPtr->getDestination(vertWalkPtr);
-            temp = 1; 
+            a->location = vDest;
             //  the ant has moved so update where required
             a->nonMove = 0;
-            antVisitedQueue.push(edgeWalkPtr->getDestination(vertWalkPtr)->data);
+            antVisitedQueue->push(vDest->data);
             break;
         } else {
             // Already been visited, so we didn't make a move.

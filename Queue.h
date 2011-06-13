@@ -21,11 +21,11 @@ using namespace std;
 class Graph{
 private:
     unsigned int size;
-    int* array;
     unsigned int head = 0;
     unsigned int tail = 0;
-    unsigned int max;
 public:
+    unsigned int max;
+    int* array;
     Queue(int s);
     ~Queue();
     int front();
