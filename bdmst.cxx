@@ -21,8 +21,10 @@ using namespace std;
 
 typedef struct {
     int data; // initial vertex ant started on
+    int nonMove;
     Vertex *location;
     vector<int> *visited;
+    queue<int> *v;
 }Ant;
 
 typedef struct {
@@ -200,8 +202,10 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
     for (unsigned int i = 0; i < g->getNumNodes(); i++) {
         a = new Ant;
         a->data = i +1;
+        a->nonMove = 0;
         a->location = vertWalkPtr;
         a->visited = new vector<int>(g->getNumNodes(), 0);
+        a->v = new queue<Vertex*>;
         ants.push_back(a);
         //	Initialize pheremone level of each edge, and set pUdatesNeeded to zero
         for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
@@ -226,11 +230,11 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
                 a = ants[j];
                 move(g, a);
             }
-            if ( step % TABU_MODIFIER == 0 ) {
-                for(unsigned int w = 0; w < g->getNumNodes(); w++) {
-                    ants[w]->visited->assign(g->getNumNodes(), 0); //  RESET VISITED FOR EACH ANT (TABU)
-                }
-            }
+            //if ( step % TABU_MODIFIER == 0 ) {
+                //for(unsigned int w = 0; w < g->getNumNodes(); w++) {
+                    //ants[w]->visited->assign(g->getNumNodes(), 0); //  RESET VISITED FOR EACH ANT (TABU)
+                //}
+            //}
         }
         for(unsigned int w = 0; w < g->getNumNodes(); w++) {
             ants[w]->visited->assign(g->getNumNodes(), 0); //  RESET VISITED FOR EACH ANT
@@ -705,10 +709,12 @@ void move(Graph *g, Ant *a) {
     vertWalkPtr = a->location;
     Edge* edgeWalkPtr = NULL;
     int numMoves = 0;
+    int dest;
     vector<Edge*>::iterator e;
     double sum = 0.0;
     vector<Range> edges;
     double value;
+    queue<int> antVisitedQueue;
     Range* current;
     vector<int> v = *a->visited;
     //	Determine Ranges for each edge
@@ -732,13 +738,28 @@ void move(Graph *g, Ant *a) {
                 break;
             }
         }
-        //	We have a randomly selected edge, if that edges hasnt already been visited by this ant
-        if (v[edgeWalkPtr->getDestination(vertWalkPtr)->data] == 0) {
+        //  Check to see if the ant is stuck
+        antVisitedQueue = *a->v;
+        if (a->nonMove > 4) {
+            while(!antVisitedQueue.empty()) {
+                antVisitedQueue.pop();
+            }
+        }
+        //	We have a randomly selected edge, if that edges hasnt already been visited by this ant traverse the edge
+            // this needs to be fixed
+        }
+        
+        if (*temp == 0) {
             edgeWalkPtr->pUpdatesNeeded++;
             a->location = edgeWalkPtr->getDestination(vertWalkPtr);
-            v[edgeWalkPtr->getDestination(vertWalkPtr)->data] = 1; 
+            temp = 1; 
+            //  the ant has moved so update where required
+            a->nonMove = 0;
+            antVisitedQueue.push(edgeWalkPtr->getDestination(vertWalkPtr)->data);
             break;
         } else {
+            // Already been visited, so we didn't make a move.
+            a->nonMove++;
             numMoves++;
         }
     }
