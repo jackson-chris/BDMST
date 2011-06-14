@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <vector>
 #include "Graph.cxx"
-#include "Queue.cxx"
+#include "Queue.h"
 #include "BinaryHeap.h"
 #include <cmath>
 #include <cstring>
@@ -23,9 +23,9 @@ typedef struct {
     int data; // initial vertex ant started on
     int nonMove;
     Vertex *location;
-    Queue visited;
+    Queue *visited;
 }Ant;
-
+        
 typedef struct {
     double low;
     double high;
@@ -235,7 +235,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
             //}
         }
         for(unsigned int w = 0; w < g->getNumNodes(); w++) {
-            ants[w]->visited->assign(g->getNumNodes(), 0); //  RESET VISITED FOR EACH ANT
+            ants[w]->visited->reset(); //  RESET VISITED FOR EACH ANT
         }
         updatePheromonesPerEdge(g);
         //	Tree Construction Stage
@@ -715,7 +715,7 @@ void move(Graph *g, Ant *a) {
     double value;
     Queue* antVisitedQueue;
     Range* current;
-    vector<int> v = *a->visited;
+    //vector<int> v = *a->visited;
     //	Determine Ranges for each edge
     for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
         edgeWalkPtr = *e;
@@ -738,7 +738,7 @@ void move(Graph *g, Ant *a) {
             }
         }
         //  Check to see if the ant is stuck
-        antVisitedQueue = a->v;
+        antVisitedQueue = a->visited;
         if (a->nonMove > 4) {
             while(!antVisitedQueue->empty()) {
                 antVisitedQueue->pop();
@@ -747,10 +747,10 @@ void move(Graph *g, Ant *a) {
         //	We have a randomly selected edge, if that edges hasnt already been visited by this ant traverse the edge
         vDest = edgeWalkPtr->getOtherSide(vertWalkPtr);
         alreadyVisited = false;
-        for(unsigned int i = 0; i < TABU_MODIFIER; i++) {
+        for(int i = 0; i < TABU_MODIFIER; i++) {
             if( antVisitedQueue->array[i] == vDest->data ) {
                 // This ant has already visited this vertex
-                alreadyVisisted = true;
+                alreadyVisited = true;
                 break;
             }
         }
