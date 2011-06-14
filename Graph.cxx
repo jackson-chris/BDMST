@@ -13,37 +13,37 @@
 ************************************/
 
 void Edge::setSource(Vertex* s) {
-	source = s;
+    a = s;
 }
 
 void Edge::setDestination(Vertex* d) {
-	destination = d;
+	b = d;
 }
 
-Vertex* Edge::getSource(Vertex* loc) {
+/*Vertex* Edge::getSource(Vertex* loc) {
 	if(!loc)
 		return source;
 	else if( loc->data == source->data)
 		return source;
 	else
 		return destination;
-}
+}*/
 
 Vertex* Edge::getOtherSide(Vertex* loc) {
-    if(loc->data == source->data)
-        return source;
+    if(loc->data == a->data)
+        return a;
     else
-        return destination;
+        return b;
 }
 
-Vertex* Edge::getDestination(Vertex* loc) {
+/*Vertex* Edge::getDestination(Vertex* loc) {
 	if(!loc)
 		return destination;
 	else if( loc->data == source->data)
 		return destination;
 	else
 		return source;
-}	//	END EDGE
+}*/	//	END EDGE
 
 /************************************
 ***								  ***

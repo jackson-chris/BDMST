@@ -164,7 +164,7 @@ bool des_cmp_cost(Edge *a, Edge *b) {
 }
 
 bool asc_src(Edge* a, Edge* b) {
-    return (a->getSource(NULL)->data < b->getSource(NULL)->data);
+    return (a->a->data < b->b->data);
 }
 
 bool asc_hub(Hub* a, Hub* b) {
@@ -173,7 +173,7 @@ bool asc_hub(Hub* a, Hub* b) {
 
 void printEdge(Edge* e) {
     cout << "RESULT: ";
-    cout << e->getSource(NULL)->data << " " << e->getDestination(NULL)->data << " " << e->weight << " " << e->pLevel << endl;
+    cout << e->a->data << " " << e->b->data << " " << e->weight << " " << e->pLevel << endl;
 }
 
 void resetItems(Graph* g, processFile p) {
@@ -208,7 +208,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         //	Initialize pheremone level of each edge, and set pUdatesNeeded to zero
         for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
             edgeWalkPtr = *e;
-            if (edgeWalkPtr->getSource(NULL) == vertWalkPtr) {
+            if (edgeWalkPtr->a == vertWalkPtr) {
                 edgeWalkPtr->pUpdatesNeeded = 0;
                 edgeWalkPtr->pLevel = (maxCost - edgeWalkPtr->weight) + ((maxCost - minCost) / 3);
             }
@@ -282,7 +282,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
     //  Now add edges to graph.
     for(iedge1 = best.begin(); iedge1 < best.end(); iedge1++) {
         pEdge = *iedge1;
-        gTest->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
+        gTest->insertEdge(pEdge->a->data, pEdge->b->data, pEdge->weight, pEdge->pLevel);
     }
     cout << "RESULT: Diameter: " << testDiameter(gTest) << endl;
     cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
@@ -344,7 +344,7 @@ void updatePheromonesPerEdge(Graph *g) {
     while (vertWalkPtr) {
         for ( ex = vertWalkPtr->edges.begin() ; ex < vertWalkPtr->edges.end(); ex++ ) {
             edgeWalkPtr = *ex;
-            if (edgeWalkPtr->getSource(NULL) == vertWalkPtr) {
+            if (edgeWalkPtr->a == vertWalkPtr) {
                 IP = (maxCost - edgeWalkPtr->weight) + ((maxCost - minCost) / 3);
                 edgeWalkPtr->pLevel = (1 - evap_factor)*(edgeWalkPtr->pLevel)+(edgeWalkPtr->pUpdatesNeeded * IP);
                 if (edgeWalkPtr->pLevel > pMax) {
@@ -418,7 +418,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
     //  Now add edges to graph.
     for(iedge1 = possConn.begin(); iedge1 < possConn.end(); iedge1++) {
         pEdge = *iedge1;
-        gHub->insertEdge(pEdge->getSource(NULL)->data, pEdge->getDestination(NULL)->data, pEdge->weight, pEdge->pLevel);
+        gHub->insertEdge(pEdge->a->data, pEdge->b->data, pEdge->weight, pEdge->pLevel);
     }
     //	now construct a tree from this new graph
     connectHubs(gHub, &tree, treeCount, d - 2);
@@ -444,8 +444,8 @@ void getHubConnections(vector<Hub*> *treeHubs, vector<Edge*> *possConn, vector<H
             v2 = (*treeHubs)[j]->vert;
             for(iedge3 = v1->edges.begin(); iedge3 < v1->edges.end(); iedge3++) {
                 pEdge = *iedge3;
-                //cout << "compairing: v1.pEdge: " << pEdge->getDestination(NULL)->data << ":" << hubs[pEdge->getDestination(NULL)->data - 1]->inTree << " and v2: " << v2->data << ":"<< hubs[v2->data - 1]->inTree << endl;
-                if(pEdge->getDestination(NULL)->data == v2->data && (*hubs)[pEdge->getDestination(NULL)->data - 1]->inTree == true && (*hubs)[v2->data - 1]->inTree == true)
+                //cout << "compairing: v1.pEdge: " << pEdge->b->data << ":" << hubs[pEdge->b->data - 1]->inTree << " and v2: " << v2->data << ":"<< hubs[v2->data - 1]->inTree << endl;
+                if(pEdge->b->data == v2->data && (*hubs)[pEdge->b->data - 1]->inTree == true && (*hubs)[v2->data - 1]->inTree == true)
                     possConn->push_back(pEdge);
             }
         }
@@ -487,8 +487,8 @@ void getHubs(Graph* g, BinaryHeap* heap, vector<Edge*> *v, vector<Edge*> *c, vec
             for(iedge1 = highHub->edges.begin(); iedge1 < highHub->edges.end(); iedge1++) {
                 pEdge = *iedge1;
                 //highHub->vert->inTree = true;
-                // cout << "tyring to add edge: " << pEdge->getDestination(NULL)->data << "-" << pEdge->getSource(NULL)->data << endl;
-                if(!pEdge->inTree && treeCount < MAX_TREE_SIZE && !(pEdge->getDestination(NULL)->inTree == true || pEdge->getSource(NULL)->inTree == true)) {
+                // cout << "tyring to add edge: " << pEdge->b->data << "-" << pEdge->a->data << endl;
+                if(!pEdge->inTree && treeCount < MAX_TREE_SIZE && !(pEdge->b->inTree == true || pEdge->a->inTree == true)) {
                     temp.push(pEdge);
                 }
             }
@@ -502,8 +502,8 @@ void getHubs(Graph* g, BinaryHeap* heap, vector<Edge*> *v, vector<Edge*> *c, vec
             while(!temp.empty() && treeCount < MAX_TREE_SIZE) {
                 pEdge = temp.top();
                 temp.pop();
-                pEdge->getDestination(NULL)->inTree = true;
-                pEdge->getSource(NULL)->inTree = true;
+                pEdge->b->inTree = true;
+                pEdge->a->inTree = true;
                 pEdge->inTree = true;
                 tree->push_back(pEdge);
                 treeCount++;
@@ -514,14 +514,14 @@ void getHubs(Graph* g, BinaryHeap* heap, vector<Edge*> *v, vector<Edge*> *c, vec
             for(iedge1 = highHub->edges.begin(); iedge1 < highHub->edges.end(); iedge1++) {
                 pEdge = *iedge1;
                 //  Update Source Vertex
-                h = (*hubs)[pEdge->getSource(NULL)->data - 1];
+                h = (*hubs)[pEdge->a->data - 1];
                 if(h->vertId != highHub->vertId) {
                     numEdges -= h->edges.size();
                     h->edges.clear();
                     h->inTree = true;
                 }
                 //Update Destination
-                h = (*hubs)[pEdge->getDestination(NULL)->data - 1];
+                h = (*hubs)[pEdge->b->data - 1];
                 if(h->vertId != highHub->vertId) {
                     numEdges -= h->edges.size();
                     h->edges.clear();
@@ -553,7 +553,7 @@ void populateVector(Graph* g, vector<Edge*> *v) {
         for ( ie = vertWalkPtr->edges.begin() ; ie < vertWalkPtr->edges.end(); ie++ ) {
             edgeWalkPtr = *ie;
             //	Dont want duplicate edges in listing
-            if (edgeWalkPtr->getSource(NULL) == vertWalkPtr) {
+            if (edgeWalkPtr->a == vertWalkPtr) {
                 edgeWalkPtr->inTree = false;
                 v->push_back(edgeWalkPtr);
             }
@@ -602,7 +602,7 @@ void connectHubs(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d)
             if( pVertChk->inTree == true) {
                 for(iEdge = pVertChk->edges.begin(); iEdge < pVertChk->edges.end(); iEdge++) {
                     pEdge = *iEdge;
-                    if(pEdge->getDestination(NULL)->inTree == false && pEdge->usable) {
+                    if(pEdge->b->inTree == false && pEdge->usable) {
                         done = false;
                         if(pEdge->pLevel > minEdge) {
                             minEdge = pEdge->pLevel;
@@ -622,18 +622,18 @@ void connectHubs(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d)
         }
         if(pEdgeMin) {
             //  Found edge to insert into the tree
-            //cout << pEdgeMin->getSource(NULL)->depth;
-            if(pEdgeMin->getSource(NULL)->depth < d / 2){
+            //cout << pEdgeMin->a->depth;
+            if(pEdgeMin->a->depth < d / 2){
                 //cout << "new edge" << endl;
-                //cout << "Edge: " << pEdgeMin->getSource(NULL)->data << ", " << pEdgeMin->getDestination(NULL)->data << endl;
+                //cout << "Edge: " << pEdgeMin->a->data << ", " << pEdgeMin->b->data << endl;
                 pEdgeMin->inTree = true;
-                pEdgeMin->getDestination(NULL)->inTree = true;
-                if(pEdgeMin->getSource(NULL)->depth == 0 && (d % 2 != 0) && flag) {
-                    pEdgeMin->getDestination(NULL)->depth = 0;
+                pEdgeMin->b->inTree = true;
+                if(pEdgeMin->a->depth == 0 && (d % 2 != 0) && flag) {
+                    pEdgeMin->b->depth = 0;
                     flag = false;
                 }
                 else 
-                    pEdgeMin->getDestination(NULL)->depth = pEdgeMin->getSource(NULL)->depth + 1;
+                    pEdgeMin->b->depth = pEdgeMin->a->depth + 1;
                 tree->push_back(pEdgeMin);
                 treeCount++;
             }
@@ -685,10 +685,10 @@ void heapifyHubs(vector<Hub*> *hubs, vector<Edge*> *c, int & numEdges, BinaryHea
     for(iedge1 = c->begin(); iedge1 < c->end(); iedge1++) {
         pEdge = *iedge1;
         //  Handle Source
-        vertIndex = pEdge->getSource(NULL)->data; // the vertice number uniquely identifies each vertice
+        vertIndex = pEdge->a->data; // the vertice number uniquely identifies each vertice
         (*hubs)[vertIndex - 1]->edges.push_back(pEdge);
         //  Handle Destination
-        vertIndex = pEdge->getDestination(NULL)->data; // the vertice number uniquely identifies each vertice
+        vertIndex = pEdge->b->data; // the vertice number uniquely identifies each vertice
         (*hubs)[vertIndex - 1]->edges.push_back(pEdge);
         numEdges += 2;
     }
@@ -722,7 +722,7 @@ void move(Graph *g, Ant *a) {
         Range r;
         r.assocEdge = edgeWalkPtr;
         r.low = sum;
-        sum += edgeWalkPtr->pLevel + g->getVerticeWeight(edgeWalkPtr->getDestination(vertWalkPtr)); // changed to include destination weight
+        sum += edgeWalkPtr->pLevel + g->getVerticeWeight(edgeWalkPtr->getOtherSide(vertWalkPtr)); // changed to include destination weight
         r.high = sum;
         edges.push_back(r);
     }
@@ -745,7 +745,7 @@ void move(Graph *g, Ant *a) {
             }
         }
         //	We have a randomly selected edge, if that edges hasnt already been visited by this ant traverse the edge
-        vDest = edgeWalkPtr->getDestination(vertWalkPtr);
+        vDest = edgeWalkPtr->getOtherSide(vertWalkPtr);
         alreadyVisited = false;
         for(unsigned int i = 0; i < TABU_MODIFIER; i++) {
             if( antVisitedQueue->array[i] == vDest->data ) {
