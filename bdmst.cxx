@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <vector>
 #include "Graph.cxx"
-#include "Queue.cxx"
+#include "Queue.h"
 #include "BinaryHeap.h"
 #include <cmath>
 #include <cstring>
@@ -23,7 +23,7 @@ typedef struct {
     int data; // initial vertex ant started on
     int nonMove;
     Vertex *location;
-    Queue visited;
+    Queue* visited;
 }Ant;
 
 typedef struct {
@@ -35,7 +35,7 @@ typedef struct {
 //  Globals
 const double P_UPDATE_EVAP = 1.05;
 const double P_UPDATE_ENHA = 1.05;
-const int TABU_MODIFIER = 5;
+const unsigned int TABU_MODIFIER = 5;
 const int MAX_CYCLES = 2500; // change back to 2500
 
 int instance = 0;
@@ -228,14 +228,10 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
                 a = ants[j];
                 move(g, a);
             }
-            //if ( step % TABU_MODIFIER == 0 ) {
-                //for(unsigned int w = 0; w < g->getNumNodes(); w++) {
-                    //ants[w]->visited->assign(g->getNumNodes(), 0); //  RESET VISITED FOR EACH ANT (TABU)
-                //}
-            //}
         }
+		//	Do we even need to still do this since we are using a circular queue?
         for(unsigned int w = 0; w < g->getNumNodes(); w++) {
-            ants[w]->visited->assign(g->getNumNodes(), 0); //  RESET VISITED FOR EACH ANT
+			ants[w]->visited->reset(); //  RESET VISITED FOR EACH ANT
         }
         updatePheromonesPerEdge(g);
         //	Tree Construction Stage
@@ -715,7 +711,6 @@ void move(Graph *g, Ant *a) {
     double value;
     Queue* antVisitedQueue;
     Range* current;
-    vector<int> v = *a->visited;
     //	Determine Ranges for each edge
     for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
         edgeWalkPtr = *e;
@@ -738,7 +733,7 @@ void move(Graph *g, Ant *a) {
             }
         }
         //  Check to see if the ant is stuck
-        antVisitedQueue = a->v;
+        antVisitedQueue = a->visited;
         if (a->nonMove > 4) {
             while(!antVisitedQueue->empty()) {
                 antVisitedQueue->pop();
@@ -750,7 +745,7 @@ void move(Graph *g, Ant *a) {
         for(unsigned int i = 0; i < TABU_MODIFIER; i++) {
             if( antVisitedQueue->array[i] == vDest->data ) {
                 // This ant has already visited this vertex
-                alreadyVisisted = true;
+                alreadyVisited = true;
                 break;
             }
         }
