@@ -13,37 +13,37 @@
 ************************************/
 
 void Edge::setSource(Vertex* s) {
-    a = s;
+	source = s;
 }
 
 void Edge::setDestination(Vertex* d) {
-	b = d;
+	destination = d;
 }
 
-/*Vertex* Edge::getSource(Vertex* loc) {
+Vertex* Edge::getSource(Vertex* loc) {
 	if(!loc)
 		return source;
 	else if( loc->data == source->data)
 		return source;
 	else
 		return destination;
-}*/
+}
 
 Vertex* Edge::getOtherSide(Vertex* loc) {
-    if(loc->data == a->data)
-        return a;
+    if(loc->data == source->data)
+        return source;
     else
-        return b;
+        return destination;
 }
 
-/*Vertex* Edge::getDestination(Vertex* loc) {
+Vertex* Edge::getDestination(Vertex* loc) {
 	if(!loc)
 		return destination;
 	else if( loc->data == source->data)
 		return destination;
 	else
 		return source;
-}*/	//	END EDGE
+}	//	END EDGE
 
 /************************************
 ***								  ***
@@ -346,10 +346,10 @@ int Graph::BFS(Vertex* pVert) {
         //cout << vertWalkPtr->data << ", i: " << i << endl;
         for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
             eWalkPtr = *e;
-            if(eWalkPtr->getOtherSide(vertWalkPtr)->visited == false) {
-              //  cout << "pushing "<< eWalkPtr->getOtherSide(vertWalkPtr) << endl;
-                q.push(eWalkPtr->getOtherSide(vertWalkPtr));
-                eWalkPtr->getOtherSide(vertWalkPtr)->visited = true;
+            if(eWalkPtr->getDestination(vertWalkPtr)->visited == false) {
+              //  cout << "pushing "<< eWalkPtr->getDestination(vertWalkPtr) << endl;
+                q.push(eWalkPtr->getDestination(vertWalkPtr));
+                eWalkPtr->getDestination(vertWalkPtr)->visited = true;
             }
             //cout << "blah" << endl;
         }
@@ -375,9 +375,9 @@ Vertex* Graph::BFS_2(Vertex* pVert) {
        
         for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
             eWalkPtr = *e;
-            if(eWalkPtr->getOtherSide(vertWalkPtr)->visited == false) {
-                q.push(eWalkPtr->getOtherSide(vertWalkPtr));
-                eWalkPtr->getOtherSide(vertWalkPtr)->visited = true;
+            if(eWalkPtr->getDestination(vertWalkPtr)->visited == false) {
+                q.push(eWalkPtr->getDestination(vertWalkPtr));
+                eWalkPtr->getDestination(vertWalkPtr)->visited = true;
             }
         }
     }
@@ -392,14 +392,14 @@ void Graph::print_search(Vertex *vertPtr) {
 	vector<Edge*>::iterator e;
 	for ( e = vertPtr->edges.begin() ; e < vertPtr->edges.end(); e++ ) {
         c = *e;
-		cout << "Vertex: " << c->getOtherSide(vertPtr)->data << ", with cost: " << c->weight << ", with ph: " << c->pLevel << endl;
+		cout << "Vertex: " << c->getDestination(vertPtr)->data << ", with cost: " << c->weight << ", with ph: " << c->pLevel << endl;
 	}
 	cout << "//end of this vertex" << endl << endl;
     //  Check each Edge for the vertex
 	for ( e = vertPtr->edges.begin() ; e < vertPtr->edges.end(); e++ ) {
         d = *e;
-		if (d->getOtherSide(vertPtr)->visited == 0) {
-			print_search(d->getOtherSide(vertPtr));
+		if (d->getDestination(vertPtr)->visited == 0) {
+			print_search(d->getDestination(vertPtr));
 		}
 	}
 }	//	END GRAPH

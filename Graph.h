@@ -62,10 +62,11 @@ public:
 
 
 class Edge {
+private:
+	Vertex *source;
+	Vertex *destination;
 public:
 	double pUpdatesNeeded;
-    Vertex *a;
-	Vertex *b;
 	bool inTree;
 	bool usable;
     double weight;
