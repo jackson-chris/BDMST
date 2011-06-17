@@ -23,7 +23,7 @@ typedef struct {
     int data; // initial vertex ant started on
     int nonMove;
     Vertex *location;
-    Queue* visited;
+    Queue* vQueue;
 }Ant;
 
 typedef struct {
@@ -203,7 +203,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         a->data = i +1;
         a->nonMove = 0;
         a->location = vertWalkPtr;
-        a->visited = new Queue(TABU_MODIFIER);
+        a->vQueue = new Queue(TABU_MODIFIER);
         ants.push_back(a);
         //	Initialize pheremone level of each edge, and set pUdatesNeeded to zero
         for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
@@ -231,7 +231,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         }
 		//	Do we even need to still do this since we are using a circular queue?
         for(unsigned int w = 0; w < g->getNumNodes(); w++) {
-			ants[w]->visited->reset(); //  RESET VISITED FOR EACH ANT
+			ants[w]->vQueue->reset(); //  RESET VISITED FOR EACH ANT
         }
         updatePheromonesPerEdge(g);
         //	Tree Construction Stage
@@ -709,7 +709,6 @@ void move(Graph *g, Ant *a) {
     double sum = 0.0;
     vector<Range> edges;
     double value;
-    Queue* antVisitedQueue;
     Range* current;
     //	Determine Ranges for each edge
     for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
@@ -733,17 +732,14 @@ void move(Graph *g, Ant *a) {
             }
         }
         //  Check to see if the ant is stuck
-        antVisitedQueue = a->visited;
         if (a->nonMove > 4) {
-            while(!antVisitedQueue->empty()) {
-                antVisitedQueue->pop();
-            }
+            a->vQueue->reset();
         }
         //	We have a randomly selected edge, if that edges hasnt already been visited by this ant traverse the edge
         vDest = edgeWalkPtr->getDestination(vertWalkPtr);
         alreadyVisited = false;
-        for(unsigned int i = 0; i < TABU_MODIFIER; i++) {
-            if( antVisitedQueue->array[i] == vDest->data ) {
+        for(unsigned int j = 0; j <= TABU_MODIFIER; j++) {
+            if( a->vQueue->array[j] == vDest->data ) {
                 // This ant has already visited this vertex
                 alreadyVisited = true;
                 break;
@@ -754,7 +750,7 @@ void move(Graph *g, Ant *a) {
             a->location = vDest;
             //  the ant has moved so update where required
             a->nonMove = 0;
-            antVisitedQueue->push(vDest->data);
+            a->vQueue->push(vDest->data);
             break;
         } else {
             // Already been visited, so we didn't make a move.
