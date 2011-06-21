@@ -37,6 +37,8 @@ const double P_UPDATE_EVAP = 1.05;
 const double P_UPDATE_ENHA = 1.05;
 const unsigned int TABU_MODIFIER = 5;
 const int MAX_CYCLES = 2500; // change back to 2500
+const int ONE_EDGE_OPT_BOUND = 500;
+const int ONE_EDGE_OPT_MAX = 2500;
 
 int instance = 0;
 double loopCount = 0;
@@ -73,6 +75,7 @@ void populateVector(Graph* g, vector<Edge*> *v);
 void getCandidateSet(vector<Edge*> *v, vector<Edge*> *c, const unsigned int & CAN_SIZE);
 void getHubs(Graph* g, BinaryHeap* heap, vector<Edge*> *v, vector<Edge*> *c, vector<Edge*> *tree, vector<Hub*> *hubs, vector<Hub*> *treeHubs, const unsigned int & MAX_TREE_SIZE, const unsigned int & CAN_SIZE);
 void getHubConnections(vector<Hub*> *treeHubs, vector<Edge*> *possConn, vector<Hub*> *hubs);
+void opt_one_edge(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d);
 
 int main( int argc, char *argv[]) {
     //  Process input from command line
@@ -558,6 +561,49 @@ void populateVector(Graph* g, vector<Edge*> *v) {
     }
 }
 
+void opt_one_edge(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
+    Edge* edgeWalkPtr = NULL;
+	int noImp = 0, tries = 0;
+    vector<Edge*>::iterator e;
+    double sum = 0.0;
+	bool improved = false;
+    vector<Range> ranges;
+    double value;
+    Range* current;
+
+	//	Pick an edge to remove at random favoring edges with low pheremones
+    //	First we determine the ranges for each edge
+    for ( e = tree->begin() ; e < tree->end(); e++ ) {
+        edgeWalkPtr = *e;
+        Range r;
+        r.assocEdge = edgeWalkPtr;
+        r.low = sum;
+		sum += edgeWalkPtr->pLevel; // + g->getVerticeWeight(edgeWalkPtr->getDestination(vertWalkPtr)); // Do we want to consider the weight of the vertice here?
+        r.high = sum;
+        ranges.push_back(r);
+    }
+    while (noImp < ONE_EDGE_OPT_BOUND && tries < ONE_EDGE_OPT_MAX) {
+        //	Select an edge at random and proportional to its pheremone level
+        value = fmod(rand(),(sum+1));
+        for (unsigned int i = 0; i < ranges.size(); i++) {
+            current = &ranges[i];
+            if (value >= current->low && value < current->high) {
+                //	We will use this edge
+                edgeWalkPtr = current->assocEdge;
+                break;
+            }
+        }
+		//	We now have an edge that we wish to remove.
+		
+		// TO DO FILL IN REST
+		
+		//	Handle Counters
+		if (improved) noImp = 0;
+		else noImp++;
+		tries++;
+	}
+}
+
 void connectHubs(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
     vector<Edge*>::iterator iEdge;
     Vertex *pVert, *pVertChk;
@@ -655,7 +701,7 @@ int testDiameter(Graph* g) {
     return max;
 }
 
- bool replenish(vector<Edge*> *c, vector<Edge*> *v, const unsigned int & CAN_SIZE) {
+bool replenish(vector<Edge*> *c, vector<Edge*> *v, const unsigned int & CAN_SIZE) {
     if(v->empty()) {
         return false;
     }
