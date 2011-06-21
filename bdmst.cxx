@@ -16,6 +16,8 @@
 #include <stack>
 #include <cstdlib>
 #include "processFile.h"
+#include "randomc.h"
+#include "mersenne.cxx"
 
 using namespace std;
 
@@ -46,6 +48,10 @@ double evap_factor = .65;
 double enha_factor = 1.5;
 double maxCost = 0;
 double minCost = std::numeric_limits<double>::infinity();
+
+//	Variables for proportional selection
+int32 seed = time(0), rand_pher;														
+TRandomMersenne rg(seed);
 
 int cycles = 1;
 int totalCycles = 1;
@@ -568,7 +574,7 @@ void opt_one_edge(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d
     double sum = 0.0;
 	bool improved = false;
     vector<Range> ranges;
-    double value;
+    int value;
     Range* current;
 
 	//	Pick an edge to remove at random favoring edges with low pheremones
@@ -584,7 +590,7 @@ void opt_one_edge(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d
     }
     while (noImp < ONE_EDGE_OPT_BOUND && tries < ONE_EDGE_OPT_MAX) {
         //	Select an edge at random and proportional to its pheremone level
-        value = fmod(rand(),(sum+1));
+        value = rg.IRandom(0,((int) (sum+1))); // produce a random number between 0 and highest range + 1
         for (unsigned int i = 0; i < ranges.size(); i++) {
             current = &ranges[i];
             if (value >= current->low && value < current->high) {
@@ -596,6 +602,13 @@ void opt_one_edge(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d
 		//	We now have an edge that we wish to remove.
 		
 		// TO DO FILL IN REST
+		
+		//	Remove the edge
+		
+		//	Try adding new edge if it improves the tree and doesn't violate the diameter constraint keep it.
+		
+		
+		//	END TO DO
 		
 		//	Handle Counters
 		if (improved) noImp = 0;
@@ -754,7 +767,7 @@ void move(Graph *g, Ant *a) {
     vector<Edge*>::iterator e;
     double sum = 0.0;
     vector<Range> edges;
-    double value;
+    int value;
     Range* current;
     //	Determine Ranges for each edge
     for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
@@ -768,7 +781,9 @@ void move(Graph *g, Ant *a) {
     }
     while (numMoves < 5) {
         //	Select an edge at random and proportional to its pheremone level
-        value = fmod(rand(),(sum+1));
+ 		value = rg.IRandom(0,((int) (sum+1))); // produce a random number between 0 and highest range + 1
+        //value = fmod(rand(),(sum+1));
+		//cout << value << endl;
         for (unsigned int i = 0; i < edges.size(); i++) {
             current = &edges[i];
             if (value >= current->low && value < current->high) {
