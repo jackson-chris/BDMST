@@ -223,6 +223,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
             }
         }
         //	Done with this vertex's edges; move on to next vertex
+		vertWalkPtr->updateVerticeWeight();
         vertWalkPtr = vertWalkPtr->pNextVert;
     }
     while (totalCycles <= 10000 && cycles <= MAX_CYCLES) { 
@@ -361,6 +362,7 @@ void updatePheromonesPerEdge(Graph *g) {
                 edgeWalkPtr->pUpdatesNeeded = 0;
             }
         }
+		vertWalkPtr->updateVerticeWeight();
         vertWalkPtr = vertWalkPtr->pNextVert;
     }
 }
@@ -775,7 +777,7 @@ void move(Graph *g, Ant *a) {
         Range r;
         r.assocEdge = edgeWalkPtr;
         r.low = sum;
-        sum += edgeWalkPtr->pLevel + g->getVerticeWeight(edgeWalkPtr->getDestination(vertWalkPtr)); // changed to include destination weight
+        sum += edgeWalkPtr->pLevel + edgeWalkPtr->getDestination(vertWalkPtr)->sum; 
         r.high = sum;
         edges.push_back(r);
     }

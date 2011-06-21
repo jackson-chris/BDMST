@@ -49,6 +49,8 @@ public:
     bool isConn;
     Hub* pHub;
 	double x_coord, y_coord;
+	double sum;
+	void updateVerticeWeight();
 	~Vertex(){}
 };	//	END VERTEX
 
@@ -104,7 +106,6 @@ public:
     void print_search(Vertex *vertPtr);
 	Vertex* getFirst();
 	Vertex* getRand();
-    double getVerticeWeight(Vertex *vertPtr);
     int BFS(Vertex* pVert);
     Vertex* BFS_2(Vertex* pVert);
 

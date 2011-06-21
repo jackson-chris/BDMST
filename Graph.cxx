@@ -45,6 +45,16 @@ Vertex* Edge::getDestination(Vertex* loc) {
 		return source;
 }	//	END EDGE
 
+void Vertex::updateVerticeWeight() {
+	sum  = 0.0;
+	Edge* edgeWalkPtr;
+	vector<Edge*>::iterator e;
+	for ( e = edges.begin(); e < edges.end(); e++ ) {
+		edgeWalkPtr = *e;
+		sum += edgeWalkPtr->pLevel;
+	}
+}
+
 /************************************
 ***								  ***
 ***       Graph Definitions       ***
@@ -59,17 +69,6 @@ Graph::Graph() {
 
 Graph::~Graph() {
     
-}
-
-double Graph::getVerticeWeight(Vertex *vertPtr) {
-    double sum  = 0.0;
-    Edge* edgeWalkPtr;
-    vector<Edge*>::iterator e;
-    for ( e = vertPtr->edges.begin(); e < vertPtr->edges.end(); e++ ) {
-		edgeWalkPtr = *e;
-        sum += edgeWalkPtr->pLevel;
-    }
-    return sum;
 }
 
 Vertex* Graph::getFirst() {
@@ -103,6 +102,7 @@ int Graph::insertVertex(int dataIn, Hub* hub) {
         newPtr->data = dataIn;
         newPtr->degree = 0;
         newPtr->visited = 0;
+		newPtr->sum = 0.0;
         newPtr->inTree = false;
         newPtr->isConn = false;
         newPtr->depth = -1;
@@ -144,6 +144,7 @@ int Graph::insertVertex(int dataIn, double x, double y) {
         newPtr->data = dataIn;
         newPtr->degree = 0;
         newPtr->visited = 0;
+		newPtr->sum = 0.0;
         newPtr->inTree = false;
         newPtr->isConn = false;
         newPtr->depth = -1;
