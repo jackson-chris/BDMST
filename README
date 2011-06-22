@@ -19,6 +19,3 @@ To Do:
 -change from vector to array for heap
 -ignore 0 position in array if deciding to start with 1
 -max and min for tree costs when gathering statistics
--output seed to output file so we can prove our results if need be
--switch from current rand() function to using merssine twister
--keep track of where ant went(use a queue). Also keep the queue limited to a size of about x steps.

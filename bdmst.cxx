@@ -109,6 +109,7 @@ int main( int argc, char *argv[]) {
     cout << "INFO: P_UPDATE_EVAP: " << P_UPDATE_EVAP << ", P_UPDATE_ENHA: " << P_UPDATE_ENHA << ", Tabu_modifier: " << TABU_MODIFIER << endl;
     cout << "INFO: max_cycles: " << MAX_CYCLES << ", evap_factor: " << evap_factor << ", enha_factor: " << enha_factor << endl;
     cout << "INFO: Input file: " << fileName << ", Diameter Constraint: " << d << endl << endl;
+    cout << "INFO: MT Seed: " << seed << endl;
     if(fileType[0] == 'e') {
         //cout << "USING e file type" << endl;
         inFile >> numInst;
