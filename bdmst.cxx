@@ -41,6 +41,7 @@ const unsigned int TABU_MODIFIER = 5;
 const int MAX_CYCLES = 2500; // change back to 2500
 const int ONE_EDGE_OPT_BOUND = 500;
 const int ONE_EDGE_OPT_MAX = 2500;
+conts int K = 250;
 
 int instance = 0;
 double loopCount = 0;
@@ -579,7 +580,9 @@ void opt_one_edge(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d
     vector<Range> ranges;
     int value;
     Range* current;
-
+    vector<Edge*> v;
+    populateVector(g, &v);
+    int numEdge = v.size();
 	//	Pick an edge to remove at random favoring edges with low pheremones
     //	First we determine the ranges for each edge
     for ( e = tree->begin() ; e < tree->end(); e++ ) {
@@ -594,23 +597,38 @@ void opt_one_edge(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d
     while (noImp < ONE_EDGE_OPT_BOUND && tries < ONE_EDGE_OPT_MAX) {
         //	Select an edge at random and proportional to its pheremone level
         value = rg.IRandom(0,((int) (sum+1))); // produce a random number between 0 and highest range + 1
-        for (unsigned int i = 0; i < ranges.size(); i++) {
+        /*for (unsigned int i = 0; i < ranges.size(); i++) {
             current = &ranges[i];
             if (value >= current->low && value < current->high) {
                 //	We will use this edge
                 edgeWalkPtr = current->assocEdge;
                 break;
             }
-        }
+        }*/
+	i = (sum+1) / 2;
+	while(true){
+	    current = &ranges[i];
+	    if(value < current->low)
+		i -= i/2;
+	    else if(value >= current->high)
+		i += i/2;
+	    else{
+	    //  We will use this edge
+		edgeWalkPtr = current->assocEdge;
+		break;
+	    }
+	}
 		//	We now have an edge that we wish to remove.
 		
 		// TO DO FILL IN REST
 		
 		//	Remove the edge
-		
+		tree.erase(tree.begin() + 1);
 		//	Try adding new edge if it improves the tree and doesn't violate the diameter constraint keep it.
-		
-		
+		for(int i =0; i < K; i++){
+		    value = rg.IRandom(0, numEdge);
+		    tree.push_back(v[value]);
+		    if(test
 		//	END TO DO
 		
 		//	Handle Counters
