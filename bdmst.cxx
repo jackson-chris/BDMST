@@ -637,9 +637,10 @@ void opt_one_edge(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeC
 		//cout << x << endl;
 		//	Remove the edge
 		gOpt->removeEdge(edgeWalkPtr->a->data, edgeWalkPtr->b->data);
-		tree->erase(tree->begin() + i);
+		tree->erase(tree->begin() + i -1); // this is erasing the i'th + 1 element, is that what you intended? This is where your seg fault is happening.
 		//	Try adding new edge if it improves the tree and doesn't violate the diameter constraint keep it.
 		for(int j =0; j < K; j++){
+			//	select a random edge, if its weight is less than the edge we just removed use it to try and improve tree.
 		    value = rg.IRandom(0, numEdge - 1);
 			//cout << value << endl;
 			//cout << "weight: " << v[value]->weight << ", " << x << endl;
@@ -647,7 +648,7 @@ void opt_one_edge(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeC
 				gOpt->insertEdge(v[value]->a->data, v[value]->b->data);
 				diameter = testDiameter(gOpt);
 				//cout << "diameter: " << diameter << endl;
-				if(diameter > 0 && diameter < d){
+				if(diameter > 0 && diameter <= d){ // shouldn't this be <= to d? I made the change, correct me if I'm wrong.
 					cout << "WOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO!!!!" << endl;
 					tree->push_back(v[value]);
 					improved = true;
