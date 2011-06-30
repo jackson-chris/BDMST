@@ -64,10 +64,10 @@ public:
 
 
 class Edge {
-private:
-	Vertex *source;
-	Vertex *destination;
+
 public:
+	Vertex *a;
+	Vertex *b;
 	double pUpdatesNeeded;
 	bool inTree;
 	bool usable;
@@ -92,12 +92,14 @@ class Graph{
 private:
     unsigned int numNodes;
     Vertex *first;
+	Vertex* nodes[1000];
 public:
     Graph();
     ~Graph();
     int insertVertex(int dataIn, Hub* hub = NULL);
     int deleteVertex(int dltKey);
     int insertEdge (int fromKey, int toKey, double weight, double pLevel = 0);
+	void removeEdge(int a, int b);
     double insertEdge(int fromKey, int toKey);
     int insertVertex(int dataIn, double x, double y);
     bool emptyGraph();

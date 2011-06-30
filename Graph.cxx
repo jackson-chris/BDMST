@@ -13,36 +13,36 @@
 ************************************/
 
 void Edge::setSource(Vertex* s) {
-	source = s;
+	a = s;
 }
 
 void Edge::setDestination(Vertex* d) {
-	destination = d;
+	b = d;
 }
 
 Vertex* Edge::getSource(Vertex* loc) {
 	if(!loc)
-		return source;
-	else if( loc->data == source->data)
-		return destination;
+		return a;
+	else if( loc->data == a->data)
+		return b;
 	else
-		return source;
+		return a;
 }
 
 Vertex* Edge::getOtherSide(Vertex* loc) {
-    if(loc->data == source->data)
-        return source;
+    if(loc->data == a->data)
+        return b;
     else
-        return destination;
+        return a;
 }
 
 Vertex* Edge::getDestination(Vertex* loc) {
 	if(!loc)
-		return destination;
-	else if( loc->data == source->data)
-		return destination;
+		return b;
+	else if( loc->data == a->data)
+		return b;
 	else
-		return source;
+		return a;
 }	//	END EDGE
 
 void Vertex::updateVerticeWeight() {
@@ -131,6 +131,7 @@ int Graph::insertVertex(int dataIn, Hub* hub) {
         }
         newPtr->pNextVert = locPtr;
     }
+	nodes[dataIn] = newPtr;
     return 1;
 }
 
@@ -174,6 +175,8 @@ int Graph::insertVertex(int dataIn, double x, double y) {
         }
         newPtr->pNextVert = locPtr;
     }
+
+	nodes[dataIn] = newPtr;
     return 1;
 }
 
@@ -247,8 +250,8 @@ int Graph::insertEdge(int fromKey, int toKey, double weight, double level) {
     //  Found verticies. Make edge.
     ++vertFromPtr->degree;
     ++vertToPtr->degree;
-    newPtr->setDestination(vertToPtr);
-	newPtr->setSource(vertFromPtr);
+    newPtr->b=vertToPtr;
+	newPtr->a=vertFromPtr;
 	//	Add edges to each adjacency list
 	vertToPtr->edges.push_back(newPtr);
 	vertFromPtr->edges.push_back(newPtr);
@@ -290,14 +293,49 @@ double Graph::insertEdge(int fromKey, int toKey) {
     newPtr->weight = weight;
     ++vertFromPtr->degree;
     ++vertToPtr->degree;
-    newPtr->setDestination(vertToPtr);
-	newPtr->setSource(vertFromPtr);
+    newPtr->b=vertToPtr;
+	newPtr->a=vertFromPtr;
 	//	Add edges to each adjacency list
 	vertToPtr->edges.push_back(newPtr);
 	vertFromPtr->edges.push_back(newPtr);
 	return weight;
 }
+/*
+ * Remove a given edge from the graph
+ */
+void Graph::removeEdge(int a, int b){
+    vector<Edge*>::iterator e;
+	Edge* eWalkPtr;
+	vector<Edge*>::iterator end = nodes[a]->edges.end();
+	for ( e = nodes[a]->edges.begin() ; e < end; e++ ) {
+		eWalkPtr = *e;
+		if(eWalkPtr->a->data == a && eWalkPtr->b->data == b){
+			//removeEdge from vector
+			nodes[a]->edges.erase(e);
+			break;
+		}
+		else if(eWalkPtr->a->data == b && eWalkPtr->b->data == a){
+			//removeEdge from vector
+			nodes[a]->edges.erase(e);
+			break;
 
+		}
+	}
+	end = nodes[b]->edges.end();
+	for ( e = nodes[b]->edges.begin() ; e < end; e++ ) {
+		eWalkPtr = *e;
+		if(eWalkPtr->a->data == a && eWalkPtr->b->data == b){
+			//removeEdge from vector
+			nodes[b]->edges.erase(e);
+			break;
+		}
+		else if(eWalkPtr->a->data == b && eWalkPtr->b->data == a){
+			//removeEdge from vector
+			nodes[b]->edges.erase(e);
+			break;
+		}
+	}
+}
 unsigned int Graph::getNumNodes() {
     return numNodes;
 }
@@ -322,6 +360,7 @@ void Graph::print() {
 
 int Graph::BFS(Vertex* pVert) {
     int i = 0;
+	int unsigned x = 0;
     Edge *eWalkPtr;
     vector<Edge*>::iterator e;
     Vertex *b = new Vertex();
@@ -335,6 +374,7 @@ int Graph::BFS(Vertex* pVert) {
         vertWalkPtr = vertWalkPtr->pNextVert;
     }
     q.push(pVert);
+	x++;
     pVert->visited = true;
     q.push(b);
     while(!q.empty()) {
@@ -347,14 +387,17 @@ int Graph::BFS(Vertex* pVert) {
         //cout << vertWalkPtr->data << ", i: " << i << endl;
         for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
             eWalkPtr = *e;
-            if(eWalkPtr->getDestination(vertWalkPtr)->visited == false) {
-              //  cout << "pushing "<< eWalkPtr->getDestination(vertWalkPtr) << endl;
-                q.push(eWalkPtr->getDestination(vertWalkPtr));
-                eWalkPtr->getDestination(vertWalkPtr)->visited = true;
+            if(eWalkPtr->getOtherSide(vertWalkPtr)->visited == false) {
+              //  cout << "pushing "<< eWalkPtr->getOtherSide(vertWalkPtr) << endl;
+                q.push(eWalkPtr->getOtherSide(vertWalkPtr));
+				x++;
+                eWalkPtr->getOtherSide(vertWalkPtr)->visited = true;
             }
             //cout << "blah" << endl;
         }
     }
+	if(x != numNodes)
+		return -1;
     return i;
 }
 
@@ -376,9 +419,9 @@ Vertex* Graph::BFS_2(Vertex* pVert) {
        
         for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
             eWalkPtr = *e;
-            if(eWalkPtr->getDestination(vertWalkPtr)->visited == false) {
-                q.push(eWalkPtr->getDestination(vertWalkPtr));
-                eWalkPtr->getDestination(vertWalkPtr)->visited = true;
+            if(eWalkPtr->getOtherSide(vertWalkPtr)->visited == false) {
+                q.push(eWalkPtr->getOtherSide(vertWalkPtr));
+                eWalkPtr->getOtherSide(vertWalkPtr)->visited = true;
             }
         }
     }
@@ -393,14 +436,14 @@ void Graph::print_search(Vertex *vertPtr) {
 	vector<Edge*>::iterator e;
 	for ( e = vertPtr->edges.begin() ; e < vertPtr->edges.end(); e++ ) {
         c = *e;
-		cout << "Vertex: " << c->getDestination(vertPtr)->data << ", with cost: " << c->weight << ", with ph: " << c->pLevel << endl;
+		cout << "Vertex: " << c->getOtherSide(vertPtr)->data << ", with cost: " << c->weight << ", with ph: " << c->pLevel << endl;
 	}
 	cout << "//end of this vertex" << endl << endl;
     //  Check each Edge for the vertex
 	for ( e = vertPtr->edges.begin() ; e < vertPtr->edges.end(); e++ ) {
         d = *e;
-		if (d->getDestination(vertPtr)->visited == 0) {
-			print_search(d->getDestination(vertPtr));
+		if (d->getOtherSide(vertPtr)->visited == 0) {
+			print_search(d->getOtherSide(vertPtr));
 		}
 	}
 }	//	END GRAPH
