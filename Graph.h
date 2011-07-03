@@ -25,40 +25,40 @@ public:
     unsigned int vertId;
     vector<Edge*> edges;
     Vertex* vert;
-	bool inTree;
+    bool inTree;
     int lenPath;
     ~Hub(){edges.~vector();}
 };
 
 /*
  *
- *	VERTEX CLASS
+ *  VERTEX CLASS
  *
  */
 
 class Vertex {
 public:
     Vertex *pNextVert;
-	vector<Edge*> edges;
+    vector<Edge*> edges;
     int data;
     int degree;
-	int treeDegree;
-	int visited;
-	int depth;
-	bool inTree;
+    int treeDegree;
+    int visited;
+    int depth;
+    bool inTree;
     bool isConn;
     Hub* pHub;
-	double x_coord, y_coord;
-	double sum;
-	void updateVerticeWeight();
-	~Vertex(){}
-};	//	END VERTEX
+    double x_coord, y_coord;
+    double sum;
+    void updateVerticeWeight();
+    ~Vertex(){}
+};  //  END VERTEX
 
 
 
 /*
  *
- *	EDGE CLASS
+ *  EDGE CLASS
  *
  */
 
@@ -66,17 +66,17 @@ public:
 class Edge {
 
 public:
-	Vertex *a;
-	Vertex *b;
-	double pUpdatesNeeded;
-	bool inTree;
-	bool usable;
+    Vertex *a;
+    Vertex *b;
+    double pUpdatesNeeded;
+    bool inTree;
+    bool usable;
     double weight;
-	double pLevel;
-	void setSource(Vertex* s);
-	void setDestination(Vertex* d);
-	Vertex* getSource(Vertex* loc);
-	Vertex* getDestination(Vertex* loc);
+    double pLevel;
+    void setSource(Vertex* s);
+    void setDestination(Vertex* d);
+    Vertex* getSource(Vertex* loc);
+    Vertex* getDestination(Vertex* loc);
     Vertex* getOtherSide(Vertex* loc);
 };
 
@@ -84,7 +84,7 @@ public:
 
 /*
  *
- *	GRAPH CLASS
+ *  GRAPH CLASS
  *
  */
 
@@ -92,24 +92,25 @@ class Graph{
 private:
     unsigned int numNodes;
     Vertex *first;
-	Vertex* nodes[1000];
+    Vertex* nodes[1000];
 public:
     Graph();
     ~Graph();
     int insertVertex(int dataIn, Hub* hub = NULL);
     int deleteVertex(int dltKey);
     int insertEdge (int fromKey, int toKey, double weight, double pLevel = 0);
-	void removeEdge(int a, int b);
+    void removeEdge(int a, int b);
     double insertEdge(int fromKey, int toKey);
     int insertVertex(int dataIn, double x, double y);
     bool emptyGraph();
     unsigned int getNumNodes();
-	void print();
+    void print();
     void print_search(Vertex *vertPtr);
-	Vertex* getFirst();
-	Vertex* getRand();
+    Vertex* getFirst();
+    Vertex* getRand();
     int BFS(Vertex* pVert);
     Vertex* BFS_2(Vertex* pVert);
+    int testDiameter();
 
 };
 

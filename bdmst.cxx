@@ -74,7 +74,6 @@ void compute(Graph* g, int d, processFile p, int instance);
 void heapifyHubs(vector<Hub*> *hubs, vector<Edge*> *c, int & numEdges, BinaryHeap* heap);
 bool replenish(vector<Edge*> *c, vector<Edge*> *v, const unsigned int & CAN_SIZE);
 void connectHubs(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d);
-int testDiameter(Graph* g);
 Edge* remEdge(vector<Edge*> best);
 int find(vector<int> UF, int start);
 int universalSearch(Graph* g, int start);
@@ -292,10 +291,10 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         pEdge = *iedge1;
         gTest->insertEdge(pEdge->a->data, pEdge->b->data, pEdge->weight, pEdge->pLevel);
     }
-    cout << "RESULT: Diameter: " << testDiameter(gTest) << endl;
+    cout << "RESULT: Diameter: " << gTest->testDiameter() << endl;
     cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
 
-    opt_one_edge(g, gTest, &best, best.size(), d);
+    //opt_one_edge(g, gTest, &best, best.size(), d);
     //  Reset items
     ants.clear();
     cycles = 1;
@@ -645,8 +644,9 @@ void opt_one_edge(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeC
             //cout << value << endl;
             //cout << "weight: " << v[value]->weight << ", " << x << endl;
             if(v[value]->weight < x){
+
                 gOpt->insertEdge(v[value]->a->data, v[value]->b->data);
-                diameter = testDiameter(gOpt);
+                diameter = gOpt->testDiameter();
                 //cout << "diameter: " << diameter << endl;
                 if(diameter > 0 && diameter <= d){ // shouldn't this be <= to d? I made the change, correct me if I'm wrong.
                     cout << "WOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO!!!!" << endl;
@@ -760,15 +760,6 @@ int find(vector<int> UF, int start){
     return start;
 }
 
-
-int testDiameter(Graph* g) {
-    int max = 0;
-    Vertex* pVert;
-    pVert = g->BFS_2(g->getFirst());
-    max = g->BFS(pVert);
-    return max;
-}
-
 bool replenish(vector<Edge*> *c, vector<Edge*> *v, const unsigned int & CAN_SIZE) {
     if(v->empty()) {
         return false;
@@ -823,6 +814,7 @@ void move(Graph *g, Ant *a) {
     double sum = 0.0;
     vector<Range> edges;
     int value;
+    int i = 0, bsint = 0;
     Range* current;
     //  Determine Ranges for each edge
     for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
@@ -834,19 +826,39 @@ void move(Graph *g, Ant *a) {
         r.high = sum;
         edges.push_back(r);
     }
+    i = edges.size() / 2;
+    bsint = i;
     while (numMoves < 5) {
         //  Select an edge at random and proportional to its pheremone level
-        value = rg.IRandom(0,((int) (sum+1))); // produce a random number between 0 and highest range + 1
+        value = rg.IRandom(0,((int) (sum))); // produce a random number between 0 and highest range + 1
         //value = fmod(rand(),(sum+1));
         //cout << value << endl;
-        for (unsigned int i = 0; i < edges.size(); i++) {
+        /*for (unsigned int i = 0; i < edges.size(); i++) {
             current = &edges[i];
             if (value >= current->low && value < current->high) {
                 //  We will use this edge
                 edgeWalkPtr = current->assocEdge;
                 break;
             }
+        }*/
+
+        while(true){
+            current = &edges[i];
+            bsint -= bsint/2;
+            if(value < current->low){
+                i -= bsint;
+            }
+            else if(value >= current->high){
+                i += bsint;
+            }
+            else{
+            //  We will use this edge
+                //cout << current->assocEdge->weight << endl;
+                edgeWalkPtr = current->assocEdge;
+                break;
+            }
         }
+
         //  Check to see if the ant is stuck
         if (a->nonMove > 4) {
             a->vQueue->reset();
