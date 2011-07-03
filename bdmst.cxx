@@ -73,7 +73,7 @@ void resetItems(Graph* g, processFile p);
 void compute(Graph* g, int d, processFile p, int instance);
 void heapifyHubs(vector<Hub*> *hubs, vector<Edge*> *c, int & numEdges, BinaryHeap* heap);
 bool replenish(vector<Edge*> *c, vector<Edge*> *v, const unsigned int & CAN_SIZE);
-void connectHubs(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d);
+void connectHubs(Graph* gFull, Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d);
 Edge* remEdge(vector<Edge*> best);
 int find(vector<int> UF, int start);
 int universalSearch(Graph* g, int start);
@@ -430,7 +430,7 @@ vector<Edge*> treeConstruct(Graph *g, int d) {
         gHub->insertEdge(pEdge->a->data, pEdge->b->data, pEdge->weight, pEdge->pLevel);
     }
     //  now construct a tree from this new graph
-    connectHubs(gHub, &tree, treeCount, d - 2);
+    connectHubs(g, gHub, &tree, treeCount, d - 2);
     //  Now that we are done cleanup
     delete gHub;
     hubs.clear();
@@ -672,7 +672,7 @@ void opt_one_edge(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeC
     }
 }
 
-void connectHubs(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
+void connectHubs(Graph* gFull, Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
     vector<Edge*>::iterator iEdge;
     Vertex *pVert, *pVertChk;
     Edge *pEdge, *pEdgeMin;
@@ -699,6 +699,7 @@ void connectHubs(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d)
     first = pVert->data;
     pVert->inTree = true;
     pVert->depth = 0;
+    gFull->root = first;
     done = false;
     while(!done) {
         //cout << "loop" << endl;
@@ -740,6 +741,7 @@ void connectHubs(Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d)
                 pEdgeMin->b->inTree = true;
                 if(pEdgeMin->a->depth == 0 && (d % 2 != 0) && flag) {
                     pEdgeMin->b->depth = 0;
+                    gFull->oddRoot = pEdgeMin->b->data;
                     flag = false;
                 }
                 else 

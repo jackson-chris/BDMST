@@ -89,12 +89,13 @@ public:
  */
 
 class Graph{
-private:
+public:
     unsigned int numNodes;
+    int root;
+    int oddRoot;
     Vertex *first;
     Vertex* nodes[1000];
-public:
-    Graph();
+    Graph(){root = 0; oddRoot = 0;}
     ~Graph();
     int insertVertex(int dataIn, Hub* hub = NULL);
     int deleteVertex(int dltKey);
