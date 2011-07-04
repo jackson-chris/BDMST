@@ -291,6 +291,8 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         pEdge = *iedge1;
         gTest->insertEdge(pEdge->a->data, pEdge->b->data, pEdge->weight, pEdge->pLevel);
     }
+    gTest->root = g->root;
+    gTest->oddRoot = g->oddRoot;
     cout << "RESULT: Diameter: " << gTest->testDiameter() << endl;
     cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
 
@@ -811,6 +813,7 @@ void move(Graph *g, Ant *a) {
     vertWalkPtr = a->location;
     Edge* edgeWalkPtr = NULL;
     int numMoves = 0;
+    int size = 0, initialI = 0;
     bool alreadyVisited;
     vector<Edge*>::iterator e;
     double sum = 0.0;
@@ -828,8 +831,8 @@ void move(Graph *g, Ant *a) {
         r.high = sum;
         edges.push_back(r);
     }
-    i = edges.size() / 2;
-    bsint = i;
+    size = edges.size();
+    initialI = size / 2;
     while (numMoves < 5) {
         //  Select an edge at random and proportional to its pheremone level
         value = rg.IRandom(0,((int) (sum))); // produce a random number between 0 and highest range + 1
@@ -844,9 +847,15 @@ void move(Graph *g, Ant *a) {
             }
         }*/
 
+        i = initialI;
+        if(i%2 != 0)
+            i++;
+        bsint = i;
         while(true){
             current = &edges[i];
             bsint -= bsint/2;
+            //cout << value << ", " << current->low << ", " << current->high << endl;
+            //cout << "i = " << i << " bsint = " << bsint << endl;
             if(value < current->low){
                 i -= bsint;
             }
@@ -858,9 +867,7 @@ void move(Graph *g, Ant *a) {
                 //cout << current->assocEdge->weight << endl;
                 edgeWalkPtr = current->assocEdge;
                 break;
-            }
-        }
-
+            } } 
         //  Check to see if the ant is stuck
         if (a->nonMove > 4) {
             a->vQueue->reset();

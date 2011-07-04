@@ -95,7 +95,7 @@ public:
     int oddRoot;
     Vertex *first;
     Vertex* nodes[1000];
-    Graph(){root = 0; oddRoot = 0;}
+    Graph();
     ~Graph();
     int insertVertex(int dataIn, Hub* hub = NULL);
     int deleteVertex(int dltKey);

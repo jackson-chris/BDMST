@@ -64,6 +64,8 @@ void Vertex::updateVerticeWeight() {
 
 Graph::Graph() {
     numNodes = 0;
+    root = 0;
+    oddRoot = 0;
     first = NULL;
 }
 
@@ -406,6 +408,7 @@ Vertex* Graph::BFS_2(Vertex* pVert) {
     vector<Edge*>::iterator e;
     queue<Vertex*> q;
     Vertex *vertWalkPtr;
+    Vertex *otherSide;
     vertWalkPtr = first;
     while(vertWalkPtr) {
         vertWalkPtr->visited = false;
@@ -413,15 +416,21 @@ Vertex* Graph::BFS_2(Vertex* pVert) {
     }
     q.push(pVert);
     pVert->visited = true;
+    pVert->depth = 0;
     while(!q.empty()) {
         vertWalkPtr = q.front();
         q.pop();
        
         for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
             eWalkPtr = *e;
-            if(eWalkPtr->getOtherSide(vertWalkPtr)->visited == false) {
-                q.push(eWalkPtr->getOtherSide(vertWalkPtr));
-                eWalkPtr->getOtherSide(vertWalkPtr)->visited = true;
+            otherSide = eWalkPtr->getOtherSide(vertWalkPtr);
+            if(otherSide->visited == false) {
+                q.push(otherSide);
+                otherSide->visited = true;
+                if(otherSide->data == oddRoot)
+                    otherSide->depth = 0;
+                otherSide->depth = vertWalkPtr->depth + 1;
+                
             }
         }
     }
@@ -452,7 +461,7 @@ void Graph::print_search(Vertex *vertPtr) {
 int Graph::testDiameter() {
     int max = 0;
     Vertex* pVert;
-    pVert = this->BFS_2(first);
+    pVert = this->BFS_2(nodes[root]);
     max = this->BFS(pVert);
     return max;
 }
