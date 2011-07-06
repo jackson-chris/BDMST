@@ -296,7 +296,15 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
     cout << "RESULT: Diameter: " << gTest->testDiameter() << endl;
     cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
 
-    //opt_one_edge(g, gTest, &best, best.size(), d);
+    opt_one_edge(g, gTest, &best, best.size(), d);
+
+    bestCost = 0;
+    for ( ed = best.begin(); ed < best.end(); ed++ ) {
+        edgeWalkPtr = *ed;
+        bestCost+=edgeWalkPtr->weight;
+    }
+    
+    cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
     //  Reset items
     ants.clear();
     cycles = 1;
@@ -574,48 +582,49 @@ void populateVector(Graph* g, vector<Edge*> *v) {
 }
 
 void opt_one_edge(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d) {
-    Edge* edgeWalkPtr = NULL;
+    Edge* edgeWalkPtr = NULL,* edgeTemp;
     int noImp = 0, tries = 0;
     vector<Edge*>::iterator e;
     double sum = 0.0;
     bool improved = false;
-    vector<Range> ranges;
+    Range* ranges[treeCount];
     int value;
-    double x = 0;
-    int i;
+    int i, s, q;
     int bsint = 0;
     Range* current;
+    Range* temp;
     vector<Edge*> v;
     populateVector(g, &v);
     int diameter = 0;
     int numEdge = v.size();
+    //initialize ranges
+    for ( e = tree->begin(), q=0; e < tree->end(); e++, q++) {
+        edgeWalkPtr = *e;
+        Range* r = new Range();
+        r->assocEdge = edgeWalkPtr;
+        r->low = sum;
+        sum += edgeWalkPtr->weight * 10000;
+        r->high = sum;
+        ranges[q] = r;
+    }
+    //  mark edges already in tree
+    for ( e = tree->begin(); e < tree->end(); e++) {
+        edgeWalkPtr = *e;
+        edgeWalkPtr->inTree = true;
+    }
+
+    while (noImp < ONE_EDGE_OPT_BOUND && tries < ONE_EDGE_OPT_MAX) {
     //  Pick an edge to remove at random favoring edges with low pheremones
     //  First we determine the ranges for each edge
-    for ( e = tree->begin() ; e < tree->end(); e++ ) {
-        edgeWalkPtr = *e;
-        Range r;
-        r.assocEdge = edgeWalkPtr;
-        r.low = sum;
-        sum += edgeWalkPtr->pLevel; // + g->getVerticeWeight(edgeWalkPtr->getOtherSide(vertWalkPtr)); // Do we want to consider the weight of the vertice here?
-        r.high = sum;
-        ranges.push_back(r);
-    }
-    while (noImp < ONE_EDGE_OPT_BOUND && tries < ONE_EDGE_OPT_MAX) {
-        //  Select an edge at random and proportional to its pheremone level
-        //cout << "1\n";
         value = rg.IRandom(0,((int) (sum+1))); // produce a random number between 0 and highest range + 1
-        /*for (unsigned int i = 0; i < ranges.size(); i++) {
-            current = &ranges[i];
-            if (value >= current->low && value < current->high) {
-                //  We will use this edge
-                edgeWalkPtr = current->assocEdge;
-                break;
-            }
-        }*/
         i = treeCount / 2;
+        if (i%2 != 0)
+            i++;
         bsint = i;
-        while(true){
-            current = &ranges[i];
+        s=0;
+        while(true && s++ < 1000) {
+        //cout << "oh shit " << i << "treeCount " << treeCount << endl  ;
+            current = ranges[i];
             bsint -= bsint/2;
             if(value < current->low){
                 i -= bsint;
@@ -625,53 +634,69 @@ void opt_one_edge(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeC
             }
             else{
             //  We will use this edge
-                //cout << current->assocEdge->weight << endl;
+            //cout << current->assocEdge->weight << endl;
                 edgeWalkPtr = current->assocEdge;
-                break;
+            break;
             }
         }
         //  We now have an edge that we wish to remove.
-        //cout << "2\n";
-        //cout << edgeWalkPtr->weight << endl;
-        x = edgeWalkPtr->weight;
-        // TO DO FILL IN REST
-        //cout << x << endl;
         //  Remove the edge
         gOpt->removeEdge(edgeWalkPtr->a->data, edgeWalkPtr->b->data);
-        tree->erase(tree->begin() + i -1); // this is erasing the i'th + 1 element, is that what you intended? This is where your seg fault is happening.
         //  Try adding new edge if it improves the tree and doesn't violate the diameter constraint keep it.
-        for(int j =0; j < K; j++){
-            //  select a random edge, if its weight is less than the edge we just removed use it to try and improve tree.
+        for (int j=0; j < K; j++) {
+        //  select a random edge, if its weight is less than the edge we just removed use it to try and improve tree.
             value = rg.IRandom(0, numEdge - 1);
-            //cout << value << endl;
-            //cout << "weight: " << v[value]->weight << ", " << x << endl;
-            if(v[value]->weight < x){
-
+            if (v[value]->weight < edgeWalkPtr->weight && v[value]->inTree == false ) {
                 gOpt->insertEdge(v[value]->a->data, v[value]->b->data);
                 diameter = gOpt->testDiameter();
-                //cout << "diameter: " << diameter << endl;
-                if(diameter > 0 && diameter <= d){ // shouldn't this be <= to d? I made the change, correct me if I'm wrong.
-                    cout << "WOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO!!!!" << endl;
+                //cout << "the diameter after the addition is: " << diameter << endl;
+                if (diameter > 0 && diameter <= d) {
+                    cout << "IMPROVEMENT! Lets replace the edge." << endl;
+                    edgeWalkPtr->inTree = false;
+                    tree->erase(tree->begin() + i);
                     tree->push_back(v[value]);
+                    v[value]->inTree = true;
+                    // update the associated edge for the range that is being changed.
+                    ranges[i]->assocEdge = v[value];
+                    //  Update the ranges now that we have added a new edge into the tree
+                    if(i != 0)
+                        sum = ranges[i-1]->high;
+                    else
+                        sum = 0;
+                    for ( e = tree->begin() + i, q = i ; e < tree->end(); e++, q++ ) {
+                        edgeTemp = *e;
+                        temp = ranges[q];
+                        temp->low = sum;
+                        sum += edgeTemp->weight * 10000;
+                        temp->high = sum;
+                    }
                     improved = true;
+                    //cout << "im about to break\n";
+                    break;
+                } 
+                else { 
+                    //cout << "diameter failed remove the added edge.\n";
+                    gOpt->removeEdge(v[value]->a->data, v[value]->b->data); 
+                }
+                if (improved) {
                     break;
                 }
-                else
-                    gOpt->removeEdge(v[value]->a->data, v[value]->b->data);
             }
-            
-        //  END TO DO
+            //cout << "END FOR\n";
         }
-        //cout << "4\n";
+        //cout << "i broke.\n";
         //  Handle Counters
-        if (improved) noImp = 0;
-        else{
+        if (improved) {
+            noImp = 0;
+            improved = false;
+        }
+        else {
             noImp++;
             gOpt->insertEdge(edgeWalkPtr->a->data, edgeWalkPtr->b->data);
-            tree->push_back(edgeWalkPtr);
         }
-        tries++;
+            tries++;
     }
+    cout << "RESULT: Diameter: " << gOpt->testDiameter() << endl;
 }
 
 void connectHubs(Graph* gFull, Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
@@ -729,12 +754,12 @@ void connectHubs(Graph* gFull, Graph* g, vector<Edge*> *tree, unsigned int & tre
                 pVertChk = g->getFirst();
             }
             if(pVertChk->data == first){
-            //cout << pVertChk->data;
+                //cout << pVertChk->data;
                 back = true;
             }
         }
         if(pEdgeMin) {
-            //  Found edge to insert into the tree
+        //  Found edge to insert into the tree
             //cout << pEdgeMin->a->depth;
             if(pEdgeMin->a->depth < d / 2){
                 //cout << "new edge" << endl;
