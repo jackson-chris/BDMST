@@ -82,8 +82,8 @@ void populateVector(Graph* g, vector<Edge*> *v);
 void getCandidateSet(vector<Edge*> *v, vector<Edge*> *c, const unsigned int & CAN_SIZE);
 void getHubs(Graph* g, BinaryHeap* heap, vector<Edge*> *v, vector<Edge*> *c, vector<Edge*> *tree, vector<Hub*> *hubs, vector<Hub*> *treeHubs, const unsigned int & MAX_TREE_SIZE, const unsigned int & CAN_SIZE);
 void getHubConnections(vector<Hub*> *treeHubs, vector<Edge*> *possConn, vector<Hub*> *hubs);
-void opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d);
-void opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d);
+vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d);
+vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d);
 
 int main( int argc, char *argv[]) {
     //  Process input from command line
@@ -153,12 +153,12 @@ void compute(Graph* g, int d, processFile p, int i) {
         cout << "No need to run this diameter test. Running MST will give you solution, since diameter is greater than number of nodes." << endl;
         exit(1);
     }
+	cout << "Instance number: " << i << endl;
     vector<Edge*> best = AB_DBMST(g, d);
     //cout << "Size of best: " << best.size() << endl;
     //sort(best.begin(), best.end(), asc_src);
     //cout << "Best Tree num edges: " << best.size() << endl;
-    cout << "Instance number: " << i << endl;
-    for_each(best.begin(), best.end(), printEdge);
+    //for_each(best.begin(), best.end(), printEdge);
 }
 
 /*
@@ -295,18 +295,21 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
     }
     gTest->root = g->root;
     gTest->oddRoot = g->oddRoot;
-    cout << "RESULT: Diameter: " << gTest->testDiameter() << endl;
-    cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
 
-    opt_one_edge_v1(g, gTest, &best, best.size(), d);
-
+	cout << "This is the list of edges BEFORE local optimization: " << endl;
+	for_each(best.begin(), best.end(), printEdge);
+	cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
+	cout << "RESULT: Diameter: " << gTest->testDiameter() << endl;
+	best = opt_one_edge_v1(g, gTest, &best, best.size(), d);
+	cout << "This is the list of edges AFTER local optimization: " << endl;
+	for_each(best.begin(), best.end(), printEdge);
     bestCost = 0;
     for ( ed = best.begin(); ed < best.end(); ed++ ) {
         edgeWalkPtr = *ed;
         bestCost+=edgeWalkPtr->weight;
     }
-    
     cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
+	cout << "RESULT: Diameter: " << gTest->testDiameter() << endl;
     //  Reset items
     ants.clear();
     cycles = 1;
@@ -583,8 +586,9 @@ void populateVector(Graph* g, vector<Edge*> *v) {
     }
 }
 
-void opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d) {
+vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d) {
     Edge* edgeWalkPtr = NULL,* edgeTemp;
+    vector<Edge*> newTree;
     int noImp = 0, tries = 0;
     vector<Edge*>::iterator e;
     double sum = 0.0;
@@ -618,7 +622,7 @@ void opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int tr
     while (noImp < ONE_EDGE_OPT_BOUND && tries < ONE_EDGE_OPT_MAX) {
     //  Pick an edge to remove at random favoring edges with low pheremones
     //  First we determine the ranges for each edge
-        value = rg.IRandom(0,((int) (sum+1))); // produce a random number between 0 and highest range + 1
+        value = rg.IRandom(0,((int) (sum))); // produce a random number between 0 and highest range
         i = treeCount / 2;
         if (i%2 != 0)
             i++;
@@ -652,7 +656,7 @@ void opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int tr
                 diameter = gOpt->testDiameter();
                 //cout << "the diameter after the addition is: " << diameter << endl;
                 if (diameter > 0 && diameter <= d && gOpt->isConnected()) {
-                    cout << "IMPROVEMENT! Lets replace the edge." << endl;
+                    //cout << "IMPROVEMENT! Lets replace the edge." << endl;
                     edgeWalkPtr->inTree = false;
                     tree->erase(tree->begin() + i);
                     tree->push_back(v[value]);
@@ -675,10 +679,6 @@ void opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int tr
                     break;
                 } 
                 else { 
-					// this next if statement is for testing purposes.
-                    if(gOpt->isConnected()) {
-						cout << "OOPS, the graph is no longer connected. Try something else.\n";
-					}
                     gOpt->removeEdge(v[value]->a->data, v[value]->b->data); 
                 }
                 if (improved) {
@@ -699,12 +699,17 @@ void opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int tr
         }
             tries++;
     }
-    cout << "RESULT: Diameter: " << gOpt->testDiameter() << endl;
+    //cout << "RESULT: Diameter: " << gOpt->testDiameter() << endl;
+	gOpt->print();
+    for ( int s = 0; s < numEdge; s++) {
+        newTree.push_back((*ranges)[s].assocEdge);
+    }
+    return newTree;
 }
 
-void opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d) {
+vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d) {
 	
-	
+    return NULL;
 }
 
 void connectHubs(Graph* gFull, Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
