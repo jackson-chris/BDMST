@@ -302,6 +302,7 @@ double Graph::insertEdge(int fromKey, int toKey) {
     vertFromPtr->edges.push_back(newPtr);
     return weight;
 }
+
 /*
  * Remove a given edge from the graph
  */

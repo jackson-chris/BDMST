@@ -587,6 +587,7 @@ void populateVector(Graph* g, vector<Edge*> *v) {
 }
 
 vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d) {
+    int rMade = 0;
     Edge* edgeWalkPtr = NULL,* edgeTemp;
     vector<Edge*> newTree;
     int noImp = 0, tries = 0;
@@ -652,7 +653,7 @@ vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsign
         //  select a random edge, if its weight is less than the edge we just removed use it to try and improve tree.
             value = rg.IRandom(0, numEdge - 1);
             if (v[value]->weight < edgeWalkPtr->weight && v[value]->inTree == false ) {
-                gOpt->insertEdge(v[value]->a->data, v[value]->b->data);
+                gOpt->insertEdge(v[value]->a->data, v[value]->b->data, v[value]->weight);
                 diameter = gOpt->testDiameter();
                 //cout << "the diameter after the addition is: " << diameter << endl;
                 if (diameter > 0 && diameter <= d && gOpt->isConnected()) {
@@ -692,24 +693,24 @@ vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsign
         if (improved) {
             noImp = 0;
             improved = false;
+            rMade++;
         }
         else {
             noImp++;
-            gOpt->insertEdge(edgeWalkPtr->a->data, edgeWalkPtr->b->data);
+            gOpt->insertEdge(edgeWalkPtr->a->data, edgeWalkPtr->b->data, edgeWalkPtr->weight);
         }
             tries++;
     }
     //cout << "RESULT: Diameter: " << gOpt->testDiameter() << endl;
 	gOpt->print();
-    for ( int s = 0; s < numEdge; s++) {
-        newTree.push_back((*ranges)[s].assocEdge);
-    }
+    printf("%d edges were exchanged using opt_one_edge_v1.\n", rMade);
+    populateVector(gOpt,&newTree);
     return newTree;
 }
 
 vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d) {
-	
-    return NULL;
+    vector<Edge*> newTree;
+    return newTree;
 }
 
 void connectHubs(Graph* gFull, Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
