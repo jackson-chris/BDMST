@@ -465,3 +465,17 @@ int Graph::testDiameter() {
     max = this->BFS(pVert);
     return max;
 }
+
+bool Graph::isConnected() {
+	//	This function will test if the graph is connected. It will only work if testDiameter has just been 
+	//	called as it relies on the setting of the visited field in each vertex. This was done to save processing
+	//	time. 
+	bool connected = true;
+	Vertex* vertWalkPtr = first;
+	while(vertWalkPtr) {
+		if(vertWalkPtr->visited == false)
+			connected = false;
+		vertWalkPtr = vertWalkPtr->pNextVert;
+	}
+	return connected;
+}

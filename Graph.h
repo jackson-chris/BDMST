@@ -112,6 +112,7 @@ public:
     int BFS(Vertex* pVert);
     Vertex* BFS_2(Vertex* pVert);
     int testDiameter();
+	bool isConnected();
 
 };
 

@@ -51,7 +51,8 @@ double maxCost = 0;
 double minCost = std::numeric_limits<double>::infinity();
 
 //  Variables for proportional selection
-int32 seed = time(0), rand_pher;                                                        
+//int32 seed = time(0), rand_pher;
+int32 seed = 1310007585;
 TRandomMersenne rg(seed);
 
 int cycles = 1;
@@ -81,7 +82,8 @@ void populateVector(Graph* g, vector<Edge*> *v);
 void getCandidateSet(vector<Edge*> *v, vector<Edge*> *c, const unsigned int & CAN_SIZE);
 void getHubs(Graph* g, BinaryHeap* heap, vector<Edge*> *v, vector<Edge*> *c, vector<Edge*> *tree, vector<Hub*> *hubs, vector<Hub*> *treeHubs, const unsigned int & MAX_TREE_SIZE, const unsigned int & CAN_SIZE);
 void getHubConnections(vector<Hub*> *treeHubs, vector<Edge*> *possConn, vector<Hub*> *hubs);
-void opt_one_edge(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d);
+void opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d);
+void opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d);
 
 int main( int argc, char *argv[]) {
     //  Process input from command line
@@ -296,7 +298,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
     cout << "RESULT: Diameter: " << gTest->testDiameter() << endl;
     cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
 
-    opt_one_edge(g, gTest, &best, best.size(), d);
+    opt_one_edge_v1(g, gTest, &best, best.size(), d);
 
     bestCost = 0;
     for ( ed = best.begin(); ed < best.end(); ed++ ) {
@@ -581,7 +583,7 @@ void populateVector(Graph* g, vector<Edge*> *v) {
     }
 }
 
-void opt_one_edge(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d) {
+void opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d) {
     Edge* edgeWalkPtr = NULL,* edgeTemp;
     int noImp = 0, tries = 0;
     vector<Edge*>::iterator e;
@@ -589,7 +591,7 @@ void opt_one_edge(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeC
     bool improved = false;
     Range* ranges[treeCount];
     int value;
-    int i, s, q;
+    int i, q;
     int bsint = 0;
     Range* current;
     Range* temp;
@@ -621,8 +623,7 @@ void opt_one_edge(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeC
         if (i%2 != 0)
             i++;
         bsint = i;
-        s=0;
-        while(true && s++ < 1000) {
+        while(true) {
         //cout << "oh shit " << i << "treeCount " << treeCount << endl  ;
             current = ranges[i];
             bsint -= bsint/2;
@@ -650,7 +651,7 @@ void opt_one_edge(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeC
                 gOpt->insertEdge(v[value]->a->data, v[value]->b->data);
                 diameter = gOpt->testDiameter();
                 //cout << "the diameter after the addition is: " << diameter << endl;
-                if (diameter > 0 && diameter <= d) {
+                if (diameter > 0 && diameter <= d && gOpt->isConnected()) {
                     cout << "IMPROVEMENT! Lets replace the edge." << endl;
                     edgeWalkPtr->inTree = false;
                     tree->erase(tree->begin() + i);
@@ -671,11 +672,13 @@ void opt_one_edge(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeC
                         temp->high = sum;
                     }
                     improved = true;
-                    //cout << "im about to break\n";
                     break;
                 } 
                 else { 
-                    //cout << "diameter failed remove the added edge.\n";
+					// this next if statement is for testing purposes.
+                    if(gOpt->isConnected()) {
+						cout << "OOPS, the graph is no longer connected. Try something else.\n";
+					}
                     gOpt->removeEdge(v[value]->a->data, v[value]->b->data); 
                 }
                 if (improved) {
@@ -697,6 +700,11 @@ void opt_one_edge(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeC
             tries++;
     }
     cout << "RESULT: Diameter: " << gOpt->testDiameter() << endl;
+}
+
+void opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d) {
+	
+	
 }
 
 void connectHubs(Graph* gFull, Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {
