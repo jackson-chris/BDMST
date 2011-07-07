@@ -51,8 +51,8 @@ double maxCost = 0;
 double minCost = std::numeric_limits<double>::infinity();
 
 //  Variables for proportional selection
-//int32 seed = time(0), rand_pher;
-int32 seed = 1310007585;
+int32 seed = time(0), rand_pher;
+//int32 seed = 1310007585;
 TRandomMersenne rg(seed);
 
 int cycles = 1;
@@ -653,7 +653,7 @@ vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsign
         //  select a random edge, if its weight is less than the edge we just removed use it to try and improve tree.
             value = rg.IRandom(0, numEdge - 1);
             if (v[value]->weight < edgeWalkPtr->weight && v[value]->inTree == false ) {
-                gOpt->insertEdge(v[value]->a->data, v[value]->b->data, v[value]->weight);
+                gOpt->insertEdge(v[value]->a->data, v[value]->b->data, v[value]->weight, v[value]->pLevel);
                 diameter = gOpt->testDiameter();
                 //cout << "the diameter after the addition is: " << diameter << endl;
                 if (diameter > 0 && diameter <= d && gOpt->isConnected()) {
@@ -697,12 +697,12 @@ vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsign
         }
         else {
             noImp++;
-            gOpt->insertEdge(edgeWalkPtr->a->data, edgeWalkPtr->b->data, edgeWalkPtr->weight);
+            gOpt->insertEdge(edgeWalkPtr->a->data, edgeWalkPtr->b->data, edgeWalkPtr->weight, edgeWalkPtr->pLevel);
         }
             tries++;
     }
     //cout << "RESULT: Diameter: " << gOpt->testDiameter() << endl;
-	gOpt->print();
+	//gOpt->print();
     printf("%d edges were exchanged using opt_one_edge_v1.\n", rMade);
     populateVector(gOpt,&newTree);
     return newTree;
@@ -710,6 +710,8 @@ vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsign
 
 vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d) {
     vector<Edge*> newTree;
+    
+    populateVector(gOpt,&newTree);
     return newTree;
 }
 
