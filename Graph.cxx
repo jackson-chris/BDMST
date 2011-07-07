@@ -77,7 +77,7 @@ Vertex* Graph::getFirst() {
     return first;
 }
 
-Vertex* Graph::getRand() {
+Vertex* Graph::getRand() { // this needs to be fixed
     int x = rand() % numNodes;
     Vertex* randPtr = first;
     for(int i = 0; i < x; i++){

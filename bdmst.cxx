@@ -323,7 +323,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 
 void updatePheromonesGlobal(Graph *g, vector<Edge*> *best, bool improved) {
     //  Local Variables
-    srand((unsigned) time(NULL));
+    srand((unsigned) time(NULL)); // this needs to be fixed
     double pMax = 1000*((maxCost - minCost) + (maxCost - minCost) / 3);
     double pMin = (maxCost - minCost)/3;
     Edge *e;
@@ -342,7 +342,7 @@ void updatePheromonesGlobal(Graph *g, vector<Edge*> *best, bool improved) {
             e->pLevel = enha_factor*e->pLevel;
         } else {
         //  NO IMPROVEMENTS so Apply Evaporation
-            rand_evap_factor = XMin + rand() * (XMax - XMin) / RAND_MAX;
+            rand_evap_factor = XMin + rand() * (XMax - XMin) / RAND_MAX; // this needs to be fixed
             e->pLevel = rand_evap_factor*e->pLevel;
         }
         //  Check if fell below minCost or went above maxCost
