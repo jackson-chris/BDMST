@@ -65,7 +65,7 @@ void Vertex::updateVerticeWeight() {
 Graph::Graph() {
     numNodes = 0;
     root = 0;
-    oddRoot = 0;
+    oddRoot = -1;
     first = NULL;
     vDepths = new vector<Vertex*>*[50];
     for( int i =0 ; i < 50 ; i++ )
@@ -235,6 +235,7 @@ int Graph::insertEdge(int fromKey, int toKey, double weight, double level) {
     newPtr->weight = weight;
     newPtr->pLevel = level;
     newPtr->usable = true;
+    newPtr->inTree = false;
     if(!newPtr) {
         return (-1);
     }

@@ -12,8 +12,8 @@
 #include "mersenne.cxx"
 
 //  Variables for proportional selection
-int32 seed = time(0), rand_pher;
-//int32 seed = 1310007585;
+//int32 seed = time(0), rand_pher;
+int32 seed = 1310077132;
 TRandomMersenne rg(seed);
 
 #include "Graph.cxx"
@@ -90,7 +90,7 @@ void getCandidateSet(vector<Edge*> *v, vector<Edge*> *c, const unsigned int & CA
 void getHubs(Graph* g, BinaryHeap* heap, vector<Edge*> *v, vector<Edge*> *c, vector<Edge*> *tree, vector<Hub*> *hubs, vector<Hub*> *treeHubs, const unsigned int & MAX_TREE_SIZE, const unsigned int & CAN_SIZE);
 void getHubConnections(vector<Hub*> *treeHubs, vector<Edge*> *possConn, vector<Hub*> *hubs);
 vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d);
-vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, int d, int level);
+vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d, int level);
 
 int main( int argc, char *argv[]) {
     //  Process input from command line
@@ -160,7 +160,7 @@ void compute(Graph* g, int d, processFile p, int i) {
         cout << "No need to run this diameter test. Running MST will give you solution, since diameter is greater than number of nodes." << endl;
         exit(1);
     }
-	cout << "Instance number: " << i << endl;
+    cout << "Instance number: " << i << endl;
     vector<Edge*> best = AB_DBMST(g, d);
     //cout << "Size of best: " << best.size() << endl;
     //sort(best.begin(), best.end(), asc_src);
@@ -208,6 +208,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
     double treeCost = 0;
     bool newBest = false;
     const int s = 75;
+    int bestRoot = -1, bestOddRoot = -1;
     vector<Edge*> best, current;
     Vertex *vertWalkPtr;
     Edge *edgeWalkPtr, *pEdge;
@@ -266,6 +267,8 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
             best = current;
             bestCost = treeCost;
             newBest=true;
+            bestRoot = g->root;
+            bestOddRoot = g->oddRoot;
             if (totalCycles != 1)
                 cycles = 0;
         } 
@@ -300,26 +303,26 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         pEdge = *iedge1;
         gTest->insertEdge(pEdge->a->data, pEdge->b->data, pEdge->weight, pEdge->pLevel);
     }
-    gTest->root = g->root;
-    gTest->oddRoot = g->oddRoot;
+    gTest->root = bestRoot;
+    gTest->oddRoot = bestOddRoot;
 
-	cout << "This is the list of edges BEFORE local optimization: " << endl;
-	for_each(best.begin(), best.end(), printEdge);
-	cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
-	cout << "RESULT: Diameter: " << gTest->testDiameter() << endl;
-	//best = opt_one_edge_v1(g, gTest, &best, best.size(), d);
+    cout << "This is the list of edges BEFORE local optimization: " << endl;
+    for_each(best.begin(), best.end(), printEdge);
+    cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
+    cout << "RESULT: Diameter: " << gTest->testDiameter() << endl;
+    //best = opt_one_edge_v1(g, gTest, &best, best.size(), d);
     for(int i = 0; i < 2; i++) {
-	    best = opt_one_edge_v2(g, gTest, d, d/2);
+        best = opt_one_edge_v2(g, gTest, &best, d, d/4);
     }
-	cout << "This is the list of edges AFTER local optimization: " << endl;
-	for_each(best.begin(), best.end(), printEdge);
+    cout << "This is the list of edges AFTER local optimization: " << endl;
+    for_each(best.begin(), best.end(), printEdge);
     bestCost = 0;
     for ( ed = best.begin(); ed < best.end(); ed++ ) {
         edgeWalkPtr = *ed;
         bestCost+=edgeWalkPtr->weight;
     }
     cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
-	cout << "RESULT: Diameter: " << gTest->testDiameter() << endl;
+    cout << "RESULT: Diameter: " << gTest->testDiameter() << endl;
     //  Reset items
     ants.clear();
     cycles = 1;
@@ -515,6 +518,7 @@ void getHubs(Graph* g, BinaryHeap* heap, vector<Edge*> *v, vector<Edge*> *c, vec
             //  cout << "while, treecount: " << treeCount << ", numHubs: " << numHubs << ", numEdges: " << numEdges << endl;
             //  Get highest degree v to make our initial hub (should be top of heap)
             highHub = heap->deleteMax();
+            //cout << "High Hub " << highHub->vertId << endl;
             // cout << "Found new HUB: id: "<< highHub->vertId <<", #edges: " << highHub->edges.size() << endl; 
             //  Add all edges in highhub to tree.
             for(iedge1 = highHub->edges.begin(); iedge1 < highHub->edges.end(); iedge1++) {
@@ -604,13 +608,12 @@ void populateVector_v2(Graph* g, vector<Edge*> *v, int level) {
     //  Logic
     for ( vi = g->vDepths[level]->begin(); vi < g->vDepths[level]->end(); vi++) {
         vertWalkPtr = *vi;
-        vertWalkPtr->treeDegree = 0;
         vertWalkPtr->inTree = false;
         vertWalkPtr->isConn = false;
         for ( ie = vertWalkPtr->edges.begin() ; ie < vertWalkPtr->edges.end(); ie++ ) {
             edgeWalkPtr = *ie;
             //  Dont want duplicate edges in listing
-            if (edgeWalkPtr->a == vertWalkPtr) {
+            if (edgeWalkPtr->getOtherSide(vertWalkPtr)->depth >= level) {
                 edgeWalkPtr->inTree = false;
                 v->push_back(edgeWalkPtr);
             }
@@ -734,14 +737,14 @@ vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsign
             tries++;
     }
     //cout << "RESULT: Diameter: " << gOpt->testDiameter() << endl;
-	//gOpt->print();
+    //gOpt->print();
     printf("%d edges were exchanged using opt_one_edge_v1.\n", rMade);
     populateVector(gOpt,&newTree);
     return newTree;
 }
 
-vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, int d, int level) {
-    Edge* edgeWalkPtr = NULL, *ePtr;
+vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d, int level) {
+    Edge* edgeWalkPtr = NULL, *ePtr = NULL;
     vector<Edge*> newTree, possEdges;
     int tries = 0;
     vector<Edge*>::iterator e;
@@ -756,6 +759,13 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, int d, int level) {
     populateVector_v2(gOpt, &levelEdges, level);
     //initialize ranges
     Range* ranges[levelEdges.size()];
+    cout << "Root" << gOpt->root << endl;
+    cout << "Odd Root " << gOpt->oddRoot << endl;
+
+    if(levelEdges.size() == 0){
+        populateVector(gOpt,&newTree);
+        return newTree;
+    }
     for ( e = levelEdges.begin(), q=0; e < levelEdges.end(); e++, q++) {
         edgeWalkPtr = *e;
         Range* r = new Range();
@@ -765,17 +775,28 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, int d, int level) {
         r->high = sum;
         ranges[q] = r;
     }
+    //  mark edges already in tree
+    for ( e = tree->begin(); e < tree->end(); e++) {
+        edgeWalkPtr = *e;
+        edgeWalkPtr->inTree = true;
+        edgeWalkPtr->usable = true;
+    }
+    cout << levelEdges.size() << endl;
     while (tries < ONE_EDGE_OPT_MAX && updates < 30) {
      //  Pick an edge to remove at random favoring edges with low pheremones
      //  First we determine the ranges for each edge
+        edgeWalkPtr = NULL;
+        possEdges.clear();
         value = rg.IRandom(0,((int) (sum))); // produce a random number between 0 and highest range
         for(unsigned int i = 0; i < levelEdges.size(); i++) {
             rWalk = ranges[i];
-            if(rWalk->low <= value && rWalk->high > value ) {
+            if(rWalk->low <= value && rWalk->high > value && rWalk->assocEdge->usable ) {
                 edgeWalkPtr=rWalk->assocEdge;
+                edgeWalkPtr->usable = false;
             }
         }
-        
+        if(!edgeWalkPtr)
+           break; 
         /*
         i = levelEdges.size() / 2;
         if (i%2 != 0)
@@ -809,14 +830,23 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, int d, int level) {
          // Now get all possible edges for that vertex
         for( e = vertWalkPtr->edges.begin(); e < vertWalkPtr->edges.end(); e++) {
             ePtr = *e;
-            if(ePtr->getOtherSide(vertWalkPtr)->depth <= level)
+            if(gOpt->nodes[ePtr->getOtherSide(vertWalkPtr)->data]->depth <= level)
                 possEdges.push_back(ePtr);
         }
         sort(possEdges.begin(), possEdges.end(), des_cmp_cost);
         cout << endl;
-        for_each(possEdges.begin(), possEdges.end(), printEdge);
+        //for_each(possEdges.begin(), possEdges.end(), printEdge);
         cout << endl;
         ePtr = possEdges.back();
+        for(int i = 0; i < possEdges.size(); i++)
+            cout << "possEdges: " << possEdges[i]->a->data << ", " << possEdges[i]->b->data << " " << possEdges[i]->inTree << endl;
+        while(ePtr->inTree && !possEdges.empty()){
+            possEdges.pop_back();
+            ePtr = possEdges.back();
+        }
+        cout << "Old Edge" << edgeWalkPtr->a->data << ", " << edgeWalkPtr->b->data << "\t" << edgeWalkPtr->weight << endl;
+        cout << "New Edge" << ePtr->a->data << ", " << ePtr->b->data << "\t" << ePtr->weight << endl;
+        //cout << "Depth of new a " << ePtr->a->depth << "Depth of new b " << e
         if(edgeWalkPtr->weight > ePtr->weight) {
             cout << "we improved.\n";
             gOpt->insertEdge(ePtr->a->data, ePtr->b->data, ePtr->weight, ePtr->pLevel);
@@ -843,7 +873,7 @@ void connectHubs(Graph* gFull, Graph* g, vector<Edge*> *tree, unsigned int & tre
     bool done, back = false;
     double minEdge;
     int first;
-    bool flag = true;
+    bool otherRoot = true;
     //g->print();
     if(g->emptyGraph())
         return;
@@ -858,7 +888,7 @@ void connectHubs(Graph* gFull, Graph* g, vector<Edge*> *tree, unsigned int & tre
         pVert = pVert->pNextVert;
     }
     //  Now derive spanning tree
-    //pVert = g->getFirst();    
+    //pVert = g->getFirst();   otherRoot 
     pVert = g->getRand();
     first = pVert->data;
     pVert->inTree = true;
@@ -903,10 +933,10 @@ void connectHubs(Graph* gFull, Graph* g, vector<Edge*> *tree, unsigned int & tre
                 //cout << "Edge: " << pEdgeMin->a->data << ", " << pEdgeMin->b->data << endl;
                 pEdgeMin->inTree = true;
                 pEdgeMin->b->inTree = true;
-                if(pEdgeMin->a->depth == 0 && (d % 2 != 0) && flag) {
+                if(pEdgeMin->a->depth == 0 && (d % 2 != 0) && otherRoot) {
                     pEdgeMin->b->depth = 0;
                     gFull->oddRoot = pEdgeMin->b->data;
-                    flag = false;
+                    otherRoot = false;
                 }
                 else 
                     pEdgeMin->b->depth = pEdgeMin->a->depth + 1;

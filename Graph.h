@@ -94,7 +94,7 @@ public:
     int root;
     int oddRoot;
     Vertex *first;
-    Vertex* nodes[1000];
+    Vertex* nodes[1001];
     vector<Vertex*> **vDepths;
     Graph();
     ~Graph();
