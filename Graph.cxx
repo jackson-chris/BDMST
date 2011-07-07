@@ -77,8 +77,8 @@ Vertex* Graph::getFirst() {
     return first;
 }
 
-Vertex* Graph::getRand() { // this needs to be fixed
-    int x = rand() % numNodes;
+Vertex* Graph::getRand() { 
+    int x = rg.IRandom(0,((numNodes - 1)));
     Vertex* randPtr = first;
     for(int i = 0; i < x; i++){
         randPtr = randPtr->pNextVert;

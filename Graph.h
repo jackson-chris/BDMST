@@ -12,7 +12,7 @@
 #include <queue>
 #include <math.h>
 #include <cmath>
-#include "mersenne.cxx"
+//#include "mersenne.cxx"
 
 using namespace std;
 
@@ -108,7 +108,7 @@ public:
     void print();
     void print_search(Vertex *vertPtr);
     Vertex* getFirst();
-    Vertex* getRand(); // this needs to be fixed
+    Vertex* getRand();
     int BFS(Vertex* pVert);
     Vertex* BFS_2(Vertex* pVert);
     int testDiameter();

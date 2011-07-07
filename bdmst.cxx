@@ -8,6 +8,14 @@
 #include <cassert>
 #include <algorithm>
 #include <vector>
+#include "randomc.h"
+#include "mersenne.cxx"
+
+//  Variables for proportional selection
+int32 seed = time(0), rand_pher;
+//int32 seed = 1310007585;
+TRandomMersenne rg(seed);
+
 #include "Graph.cxx"
 #include "Queue.h"
 #include "BinaryHeap.h"
@@ -16,8 +24,6 @@
 #include <stack>
 #include <cstdlib>
 #include "processFile.h"
-#include "randomc.h"
-#include "mersenne.cxx"
 
 using namespace std;
 
@@ -50,10 +56,10 @@ double enha_factor = 1.5;
 double maxCost = 0;
 double minCost = std::numeric_limits<double>::infinity();
 
-//  Variables for proportional selection
+/*//  Variables for proportional selection
 int32 seed = time(0), rand_pher;
 //int32 seed = 1310007585;
-TRandomMersenne rg(seed);
+TRandomMersenne rg(seed);*/
 
 int cycles = 1;
 int totalCycles = 1;
@@ -323,7 +329,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 
 void updatePheromonesGlobal(Graph *g, vector<Edge*> *best, bool improved) {
     //  Local Variables
-    srand((unsigned) time(NULL)); // this needs to be fixed
+    //srand((unsigned) time(NULL)); // this needs to be fixed
     double pMax = 1000*((maxCost - minCost) + (maxCost - minCost) / 3);
     double pMin = (maxCost - minCost)/3;
     Edge *e;
@@ -342,7 +348,7 @@ void updatePheromonesGlobal(Graph *g, vector<Edge*> *best, bool improved) {
             e->pLevel = enha_factor*e->pLevel;
         } else {
         //  NO IMPROVEMENTS so Apply Evaporation
-            rand_evap_factor = XMin + rand() * (XMax - XMin) / RAND_MAX; // this needs to be fixed
+            rand_evap_factor = XMin + rg.BRandom() * (XMax - XMin) / RAND_MAX; // this needs to be fixed
             e->pLevel = rand_evap_factor*e->pLevel;
         }
         //  Check if fell below minCost or went above maxCost
