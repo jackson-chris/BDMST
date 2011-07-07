@@ -95,6 +95,7 @@ public:
     int oddRoot;
     Vertex *first;
     Vertex* nodes[1000];
+    vector<Vertex*> **vDepths;
     Graph();
     ~Graph();
     int insertVertex(int dataIn, Hub* hub = NULL);

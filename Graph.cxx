@@ -67,10 +67,15 @@ Graph::Graph() {
     root = 0;
     oddRoot = 0;
     first = NULL;
+    vDepths = new vector<Vertex*>*[50];
+    for( int i =0 ; i < 50 ; i++ )
+        vDepths[i] = new vector<Vertex*>;
 }
 
 Graph::~Graph() {
-    
+    for( int i =0 ; i < 50 ; i++ )
+        delete vDepths[i];
+    delete []vDepths;
 }
 
 Vertex* Graph::getFirst() {
@@ -418,6 +423,7 @@ Vertex* Graph::BFS_2(Vertex* pVert) {
     q.push(pVert);
     pVert->visited = true;
     pVert->depth = 0;
+    vDepths[pVert->depth]->push_back(pVert);
     while(!q.empty()) {
         vertWalkPtr = q.front();
         q.pop();
@@ -428,10 +434,14 @@ Vertex* Graph::BFS_2(Vertex* pVert) {
             if(otherSide->visited == false) {
                 q.push(otherSide);
                 otherSide->visited = true;
-                if(otherSide->data == oddRoot)
+                if(otherSide->data == oddRoot) {
                     otherSide->depth = 0;
-                otherSide->depth = vertWalkPtr->depth + 1;
-                
+
+                }
+                else {
+                    otherSide->depth = vertWalkPtr->depth + 1;                    
+                }
+                vDepths[otherSide->depth]->push_back(otherSide);
             }
         }
     }
