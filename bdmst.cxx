@@ -311,8 +311,10 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
     cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
     cout << "RESULT: Diameter: " << gTest->testDiameter() << endl;
     //best = opt_one_edge_v1(g, gTest, &best, best.size(), d);
-    for(int i = 0; i < 2; i++) {
-        best = opt_one_edge_v2(g, gTest, &best, d, d/4);
+    for(int j = 1; j < d/2; j++){
+        for(int i = 0; i < 5; i++) {
+            best = opt_one_edge_v2(g, gTest, &best, d, j);
+        }
     }
     cout << "This is the list of edges AFTER local optimization: " << endl;
     for_each(best.begin(), best.end(), printEdge);
@@ -759,8 +761,8 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d,
     populateVector_v2(gOpt, &levelEdges, level);
     //initialize ranges
     Range* ranges[levelEdges.size()];
-    cout << "Root" << gOpt->root << endl;
-    cout << "Odd Root " << gOpt->oddRoot << endl;
+    //cout << "Root" << gOpt->root << endl;
+    //cout << "Odd Root " << gOpt->oddRoot << endl;
 
     if(levelEdges.size() == 0){
         populateVector(gOpt,&newTree);
@@ -781,7 +783,7 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d,
         edgeWalkPtr->inTree = true;
         edgeWalkPtr->usable = true;
     }
-    cout << levelEdges.size() << endl;
+    //cout << levelEdges.size() << endl;
     while (tries < ONE_EDGE_OPT_MAX && updates < 30) {
      //  Pick an edge to remove at random favoring edges with low pheremones
      //  First we determine the ranges for each edge
@@ -834,18 +836,18 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d,
                 possEdges.push_back(ePtr);
         }
         sort(possEdges.begin(), possEdges.end(), des_cmp_cost);
-        cout << endl;
+        //cout << endl;
         //for_each(possEdges.begin(), possEdges.end(), printEdge);
-        cout << endl;
+        //cout << endl;
         ePtr = possEdges.back();
         for(int i = 0; i < possEdges.size(); i++)
-            cout << "possEdges: " << possEdges[i]->a->data << ", " << possEdges[i]->b->data << " " << possEdges[i]->inTree << endl;
+            //cout << "possEdges: " << possEdges[i]->a->data << ", " << possEdges[i]->b->data << " " << possEdges[i]->inTree << endl;
         while(ePtr->inTree && !possEdges.empty()){
             possEdges.pop_back();
             ePtr = possEdges.back();
         }
-        cout << "Old Edge" << edgeWalkPtr->a->data << ", " << edgeWalkPtr->b->data << "\t" << edgeWalkPtr->weight << endl;
-        cout << "New Edge" << ePtr->a->data << ", " << ePtr->b->data << "\t" << ePtr->weight << endl;
+        //cout << "Old Edge" << edgeWalkPtr->a->data << ", " << edgeWalkPtr->b->data << "\t" << edgeWalkPtr->weight << endl;
+        //cout << "New Edge" << ePtr->a->data << ", " << ePtr->b->data << "\t" << ePtr->weight << endl;
         //cout << "Depth of new a " << ePtr->a->depth << "Depth of new b " << e
         if(edgeWalkPtr->weight > ePtr->weight) {
             cout << "we improved.\n";
