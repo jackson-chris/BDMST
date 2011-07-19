@@ -15,20 +15,20 @@ using namespace std;
 
 class BinaryHeap {
 public:
-	explicit BinaryHeap ();
-	explicit BinaryHeap (const vector<Hub*> &items );
+    explicit BinaryHeap ();
+    explicit BinaryHeap (const vector<Hub*> &items );
     BinaryHeap(int x);
-	~BinaryHeap(){array.~vector();}
-	bool isEmpty() const;
+    ~BinaryHeap(){array.~vector();}
+    bool isEmpty() const;
     void insert(Hub* x);
-	Hub* deleteMax();
+    Hub* deleteMax();
     void updateHeap();
-	int topSize();
+    int topSize();
 private:
-	vector<Hub*> array; // the heap array
-	unsigned int currentSize; // Number of elements in heap
-	void buildHeap();
-	void percolateDown(int hole);
+    vector<Hub*> array; // the heap array
+    unsigned int currentSize; // Number of elements in heap
+    void buildHeap();
+    void percolateDown(int hole);
 };
 
 BinaryHeap::BinaryHeap(int x ) : array(x + 10), currentSize( 0) {
@@ -52,7 +52,7 @@ bool BinaryHeap::isEmpty() const{
 }
 
 int BinaryHeap::topSize() {
-	return array[1]->edges.size();
+    return array[1]->edges.size();
 }
 
 Hub* BinaryHeap::deleteMax() {
