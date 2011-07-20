@@ -755,6 +755,9 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d)
     vector<Edge*> levelEdges;
     Vertex* vertWalkPtr;
     Range** ranges;
+    int tabu_size = (int)(g->numNodes*.10);
+    Queue* tQueue = new Queue(tabu_size);
+
 
     for(int l = 0; l < ONE_EDGE_OPT_BOUND; l++) {
         levelRemove = rg.IRandom(1,((int) (gOpt->height - 1)));
@@ -805,7 +808,7 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d)
             value = rg.IRandom(0,((int) (sum))); // produce a random number between 0 and highest range
             for(unsigned int i = 0; i < levelEdges.size(); i++) {
                 rWalk = ranges[i];
-                if(rWalk->low <= value && rWalk->high > value && rWalk->assocEdge->usable ) {
+                if(rWalk->low <= value && rWalk->high > value && rWalk->assocEdge->usable && !tQueue->exists(rWalk->assocEdge->a->data) && !tQueue->exists(rWalk->assocEdge->b->data)) {
                     edgeWalkPtr=rWalk->assocEdge;
                     edgeWalkPtr->usable = false;
                 }
@@ -838,10 +841,14 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d)
 
          //  We now have an edge that we wish to remove.
          //  Remove the edge
+        
         gOpt->removeEdge(edgeWalkPtr->a->data, edgeWalkPtr->b->data);
-         // find out what vertice we have just cut from.
+        //  update tabu list
+        tQueue->push(edgeWalkPtr->a->data);
+        tQueue->push(edgeWalkPtr->b->data);
+        // find out what vertice we have just cut from.
         vertWalkPtr = edgeWalkPtr->a->depth > edgeWalkPtr->b->depth ? g->nodes[edgeWalkPtr->a->data] : g->nodes[edgeWalkPtr->b->data];
-         // Now get all possible edges for that vertex
+        // Noww get all possible edges for that vertex
         for( e = vertWalkPtr->edges.begin(); e < vertWalkPtr->edges.end(); e++) {
             ePtr = *e;
             if(gOpt->nodes[ePtr->getOtherSide(vertWalkPtr)->data]->depth <= levelAdd)

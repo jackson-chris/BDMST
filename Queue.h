@@ -35,7 +35,16 @@ public:
     bool empty(){return (size==0);}
     bool full(){return (size==max);}
     void reset(){size=0; head=0; tail=0;}
+    bool exists(int value);
 };
+
+inline bool Queue::exists(int value) {
+    for(unsigned int i = 0; i < size; i++) {
+        if(array[i] == value)
+            return true;
+    }
+    return false;
+}
 
 inline void Queue::push(int x) {
     int temp;
