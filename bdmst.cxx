@@ -45,7 +45,7 @@ const double P_UPDATE_EVAP = 1.05;
 const double P_UPDATE_ENHA = 1.05;
 const unsigned int TABU_MODIFIER = 5;
 const int MAX_CYCLES = 2500; // change back to 2500
-const int ONE_EDGE_OPT_BOUND = 500;
+const int ONE_EDGE_OPT_BOUND = 20; // was 500
 const int ONE_EDGE_OPT_MAX = 2500;
 const int K = 250;
 
@@ -311,9 +311,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
     cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
     cout << "RESULT: Diameter: " << gTest->testDiameter() << endl;
     //best = opt_one_edge_v1(g, gTest, &best, best.size(), d);
-    for(int i = 0; i < 5; i++) {
-        best = opt_one_edge_v2(g, gTest, &best, d);
-    }
+    best = opt_one_edge_v2(g, gTest, &best, d);
     cout << "This is the list of edges AFTER local optimization: " << endl;
     for_each(best.begin(), best.end(), printEdge);
     bestCost = 0;
@@ -746,84 +744,98 @@ vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsign
 vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d) {
     Edge* edgeWalkPtr = NULL, *ePtr = NULL;
     vector<Edge*> newTree, possEdges;
-    int tries = 0;
-    int levelRemove = rg.IRandom(1,((int) (d/2)));
-    int levelAdd = levelRemove;
+    int tries;
+    int levelRemove;
+    int levelAdd;
     vector<Edge*>::iterator e;
-    double sum = 0.0;
-    int value, updates = 0;
+    double sum;
+    int value, updates;
     Range* rWalk;
-    int q; //, i;
-    //int bsint = 0;
-    //Range* current;
+    int q; 
     vector<Edge*> levelEdges;
     Vertex* vertWalkPtr;
-    populateVector_v2(gOpt, &levelEdges, levelRemove);
-    //initialize ranges
-    Range* ranges[levelEdges.size()];
-    //cout << "Root" << gOpt->root << endl;
-    //cout << "Odd Root " << gOpt->oddRoot << endl;
+    Range** ranges;
 
-    if(levelEdges.size() == 0){
-        populateVector(gOpt,&newTree);
-        return newTree;
-    }
-    for ( e = levelEdges.begin(), q=0; e < levelEdges.end(); e++, q++) {
-        edgeWalkPtr = *e;
-        Range* r = new Range();
-        r->assocEdge = edgeWalkPtr;
-        r->low = sum;
-        sum += edgeWalkPtr->weight * 10000;
-        r->high = sum;
-        ranges[q] = r;
-    }
-    //  mark edges already in tree
-    for ( e = tree->begin(); e < tree->end(); e++) {
-        edgeWalkPtr = *e;
-        edgeWalkPtr->inTree = true;
-        edgeWalkPtr->usable = true;
-    }
-    //cout << levelEdges.size() << endl;
-    while (tries < ONE_EDGE_OPT_MAX && updates < 30) {
-     //  Pick an edge to remove at random favoring edges with low pheremones
-     //  First we determine the ranges for each edge
-        edgeWalkPtr = NULL;
-        possEdges.clear();
-        value = rg.IRandom(0,((int) (sum))); // produce a random number between 0 and highest range
-        for(unsigned int i = 0; i < levelEdges.size(); i++) {
-            rWalk = ranges[i];
-            if(rWalk->low <= value && rWalk->high > value && rWalk->assocEdge->usable ) {
-                edgeWalkPtr=rWalk->assocEdge;
-                edgeWalkPtr->usable = false;
-            }
+    for(int l = 0; l < ONE_EDGE_OPT_BOUND; l++) {
+        levelRemove = rg.IRandom(1,((int) (gOpt->height - 1)));
+        levelAdd = levelRemove;
+        sum = 0.0;
+        value = 0;
+        updates = 0;
+        tries = 0;
+        populateVector_v2(gOpt, &levelEdges, levelRemove);
+        //initialize ranges
+        ranges = new Range*[levelEdges.size()];
+        for(unsigned int k = 0; k < levelEdges.size(); k++) {
+            ranges[k] = new Range();
         }
-        if(!edgeWalkPtr)
-           break; 
+        //cout << "Root" << gOpt->root << endl;
+        //cout << "Odd Root " << gOpt->oddRoot << endl;
+
+        if(levelEdges.size() == 0){
+            cout << "woops." << endl;
+            //populateVector(gOpt,&newTree);
+            delete []ranges;
+            levelEdges.clear();
+            possEdges.clear();
+            continue;
+            //return newTree;
+        }
+        for ( e = levelEdges.begin(), q=0; e < levelEdges.end(); e++, q++) {
+            edgeWalkPtr = *e;
+            Range* r = new Range();
+            r->assocEdge = edgeWalkPtr;
+            r->low = sum;
+            sum += edgeWalkPtr->weight * 10000;
+            r->high = sum;
+            ranges[q] = r;
+        }
+        //  mark edges already in tree
+        for ( e = tree->begin(); e < tree->end(); e++) {
+            edgeWalkPtr = *e;
+            edgeWalkPtr->inTree = true;
+            edgeWalkPtr->usable = true;
+        }
+        //cout << levelEdges.size() << endl;
+        while (tries < ONE_EDGE_OPT_MAX && updates < 30) {
+        //  Pick an edge to remove at random favoring edges with low pheremones
+        //  First we determine the ranges for each edge
+            edgeWalkPtr = NULL;
+            possEdges.clear();
+            value = rg.IRandom(0,((int) (sum))); // produce a random number between 0 and highest range
+            for(unsigned int i = 0; i < levelEdges.size(); i++) {
+                rWalk = ranges[i];
+                if(rWalk->low <= value && rWalk->high > value && rWalk->assocEdge->usable ) {
+                    edgeWalkPtr=rWalk->assocEdge;
+                    edgeWalkPtr->usable = false;
+                }
+            }
+            if(!edgeWalkPtr)
+                break; 
         /*
         i = levelEdges.size() / 2;
         if (i%2 != 0)
-            i++;
+        i++;
         bsint = i;
         while(true) {
-            cout << "oh shit " << i << endl  ;
-            current = ranges[i];
-            bsint -= bsint/2;
-            if(value < current->low){
-                i -= bsint;
-            }
-            else if(value >= current->high){
-                i += bsint;
-            }
-            else{
-             //  We will use this edge
-             //cout << current->assocEdge->weight << endl;
-                edgeWalkPtr = current->assocEdge;
-                break;
-            }
+        cout << "oh shit " << i << endl  ;
+        current = ranges[i];
+        bsint -= bsint/2;
+        if(value < current->low){
+        i -= bsint;
+        }
+        else if(value >= current->high){
+        i += bsint;
+        }
+        else{
+        //  We will use this edge
+        //cout << current->assocEdge->weight << endl;
+        edgeWalkPtr = current->assocEdge;
+        break;
+        }
         }
         */
-        
-        
+
          //  We now have an edge that we wish to remove.
          //  Remove the edge
         gOpt->removeEdge(edgeWalkPtr->a->data, edgeWalkPtr->b->data);
@@ -840,7 +852,7 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d)
         //for_each(possEdges.begin(), possEdges.end(), printEdge);
         //cout << endl;
         ePtr = possEdges.back();
-        for(unsigned int i = 0; i < possEdges.size(); i++)
+        //for(unsigned int i = 0; i < possEdges.size(); i++)
             //cout << "possEdges: " << possEdges[i]->a->data << ", " << possEdges[i]->b->data << " " << possEdges[i]->inTree << endl;
         while(ePtr->inTree && !possEdges.empty()){
             possEdges.pop_back();
@@ -863,9 +875,16 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d)
         //cout << "try number: " << tries << endl;
     }
     //cout << "\n\n\n\n\n\n\n\n\n\n IM OUT YAY! \n\n\n\n\n\n\n\n\n\n";
-
-    populateVector(gOpt,&newTree);
-    return newTree;
+    //  reset items
+    for(unsigned int k = 0; k < levelEdges.size(); k++) {
+        delete ranges[k];
+    }
+    delete []ranges;
+    levelEdges.clear();
+    possEdges.clear();
+}
+populateVector(gOpt,&newTree);
+return newTree;
 }
 
 void connectHubs(Graph* gFull, Graph* g, vector<Edge*> *tree, unsigned int & treeCount, int d) {

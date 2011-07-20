@@ -93,6 +93,7 @@ public:
     unsigned int numNodes;
     int root;
     int oddRoot;
+    int height;
     Vertex *first;
     Vertex* nodes[1001];
     vector<Vertex*> **vDepths;
