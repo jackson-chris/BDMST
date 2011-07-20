@@ -1,6 +1,6 @@
 
-//  File: bdmst.cxx
-//  Author: Christopher Lee Jackson & Jason Jones
+//  fILE: BDMST.CXX
+//  author: Christopher Lee Jackson & Jason Jones
 //  Description: This is our implementation of our ant based algorithm to aproximate the BDMST problem.
 
 #include <iostream>
@@ -232,10 +232,31 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         vertWalkPtr = vertWalkPtr->pNextVert;
     }
     
-    best = treeConstruct(g, d);
-    for ( ed = best.begin(); ed < best.end(); ed++ ) {
-        edgeWalkPtr = *ed;
-        treeCost+=edgeWalkPtr->weight;
+    
+    while (totalCycles <= 10000 && cycles <= MAX_CYCLES) { 
+        //if(totalCycles % 25 == 0) 
+            //cerr << "CYCLE " << totalCycles << endl;
+        //  Exploration Stage
+        //  Tree Construction Stage
+        current = treeConstruct(g, d);
+        //  Get new tree cost
+        for ( ed = current.begin(); ed < current.end(); ed++ ) {
+            edgeWalkPtr = *ed;
+            treeCost+=edgeWalkPtr->weight;
+        }
+        if (treeCost < bestCost && (current.size() == g->getNumNodes() - 1)) {
+            //cerr << "FOUND NEW BEST at cycle: " << totalCycles <<endl;
+            best = current;
+            bestCost = treeCost;
+            newBest=true;
+            bestRoot = g->root;
+            bestOddRoot = g->oddRoot;
+            if (totalCycles != 1)
+                cycles = 0;
+        } 
+        totalCycles++;
+        cycles++;
+        treeCost = 0;
     }
     // Test if it meets the diameter bound.
     Graph* gTest = new Graph();
@@ -255,7 +276,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
 
     cout << "This is the list of edges BEFORE local optimization: " << endl;
     for_each(best.begin(), best.end(), printEdge);
-    cout << "RESULT" << instance << ": Cost: " << treeCost << endl;
+    cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
     cout << "RESULT: Diameter: " << gTest->testDiameter() << endl;
     /*best = opt_one_edge_v1(g, gTest, &best, best.size(), d);
     for(int j = 1; j < d/2; j++){
