@@ -440,7 +440,9 @@ Vertex* Graph::BFS_2(Vertex* pVert) {
 
                 }
                 else {
-                    otherSide->depth = vertWalkPtr->depth + 1;                    
+                    otherSide->depth = vertWalkPtr->depth + 1; 
+                    if (otherSide->depth > height)
+                        height = otherSide->depth;
                 }
                 vDepths[otherSide->depth]->push_back(otherSide);
             }
