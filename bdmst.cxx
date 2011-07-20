@@ -12,8 +12,8 @@
 #include "mersenne.cxx"
 
 //  Variables for proportional selection
-//int32 seed = time(0), rand_pher;
-int32 seed = 1310077132;
+int32 seed = time(0), rand_pher;
+//int32 seed = 1310077132;
 TRandomMersenne rg(seed);
 
 #include "Graph.cxx"
@@ -90,7 +90,7 @@ void getCandidateSet(vector<Edge*> *v, vector<Edge*> *c, const unsigned int & CA
 void getHubs(Graph* g, BinaryHeap* heap, vector<Edge*> *v, vector<Edge*> *c, vector<Edge*> *tree, vector<Hub*> *hubs, vector<Hub*> *treeHubs, const unsigned int & MAX_TREE_SIZE, const unsigned int & CAN_SIZE);
 void getHubConnections(vector<Hub*> *treeHubs, vector<Edge*> *possConn, vector<Hub*> *hubs);
 vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d);
-vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d, int level);
+vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d);
 
 int main( int argc, char *argv[]) {
     //  Process input from command line
@@ -311,10 +311,8 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
     cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
     cout << "RESULT: Diameter: " << gTest->testDiameter() << endl;
     //best = opt_one_edge_v1(g, gTest, &best, best.size(), d);
-    for(int j = 1; j < d/2; j++){
-        for(int i = 0; i < 5; i++) {
-            best = opt_one_edge_v2(g, gTest, &best, d, j);
-        }
+    for(int i = 0; i < 5; i++) {
+        best = opt_one_edge_v2(g, gTest, &best, d);
     }
     cout << "This is the list of edges AFTER local optimization: " << endl;
     for_each(best.begin(), best.end(), printEdge);
@@ -745,10 +743,12 @@ vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsign
     return newTree;
 }
 
-vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d, int level) {
+vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d) {
     Edge* edgeWalkPtr = NULL, *ePtr = NULL;
     vector<Edge*> newTree, possEdges;
     int tries = 0;
+    int levelRemove = rg.IRandom(1,((int) (d/2)));
+    int levelAdd = levelRemove;
     vector<Edge*>::iterator e;
     double sum = 0.0;
     int value, updates = 0;
@@ -758,7 +758,7 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d,
     //Range* current;
     vector<Edge*> levelEdges;
     Vertex* vertWalkPtr;
-    populateVector_v2(gOpt, &levelEdges, level);
+    populateVector_v2(gOpt, &levelEdges, levelRemove);
     //initialize ranges
     Range* ranges[levelEdges.size()];
     //cout << "Root" << gOpt->root << endl;
@@ -832,7 +832,7 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d,
          // Now get all possible edges for that vertex
         for( e = vertWalkPtr->edges.begin(); e < vertWalkPtr->edges.end(); e++) {
             ePtr = *e;
-            if(gOpt->nodes[ePtr->getOtherSide(vertWalkPtr)->data]->depth <= level)
+            if(gOpt->nodes[ePtr->getOtherSide(vertWalkPtr)->data]->depth <= levelAdd)
                 possEdges.push_back(ePtr);
         }
         sort(possEdges.begin(), possEdges.end(), des_cmp_cost);
@@ -840,7 +840,7 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d,
         //for_each(possEdges.begin(), possEdges.end(), printEdge);
         //cout << endl;
         ePtr = possEdges.back();
-        for(int i = 0; i < possEdges.size(); i++)
+        for(unsigned int i = 0; i < possEdges.size(); i++)
             //cout << "possEdges: " << possEdges[i]->a->data << ", " << possEdges[i]->b->data << " " << possEdges[i]->inTree << endl;
         while(ePtr->inTree && !possEdges.empty()){
             possEdges.pop_back();
