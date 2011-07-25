@@ -65,7 +65,6 @@ void Vertex::updateVerticeWeight() {
 Graph::Graph() {
     numNodes = 0;
     root = 0;
-    height = 0;
     oddRoot = -1;
     first = NULL;
     vDepths = new vector<Vertex*>*[50];
@@ -482,15 +481,15 @@ int Graph::testDiameter() {
 }
 
 bool Graph::isConnected() {
-    //  This function will test if the graph is connected. It will only work if testDiameter has just been 
-    //  called as it relies on the setting of the visited field in each vertex. This was done to save processing
-    //  time. 
-    bool connected = true;
-    Vertex* vertWalkPtr = first;
-    while(vertWalkPtr) {
-        if(vertWalkPtr->visited == false)
-            connected = false;
-        vertWalkPtr = vertWalkPtr->pNextVert;
-    }
-    return connected;
+	//	This function will test if the graph is connected. It will only work if testDiameter has just been 
+	//	called as it relies on the setting of the visited field in each vertex. This was done to save processing
+	//	time. 
+	bool connected = true;
+	Vertex* vertWalkPtr = first;
+	while(vertWalkPtr) {
+		if(vertWalkPtr->visited == false)
+			connected = false;
+		vertWalkPtr = vertWalkPtr->pNextVert;
+	}
+	return connected;
 }
