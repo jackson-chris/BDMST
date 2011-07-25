@@ -9,9 +9,7 @@ Authors: Christopher Jackson, Jason Jones
 To Do:
 
 -Create script to gather statistics.
--Gather information from prior research regarding run times and best results to compare to our findings.
 -Code optimization functions.
--Gather what diameter bounds we should be using.
 -remove private data members
 -remove function calls where the result doesn't change to improve performance
 -get rid of functions/classes/structs that are no longer in use
