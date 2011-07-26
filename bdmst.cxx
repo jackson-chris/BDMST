@@ -1046,13 +1046,16 @@ void move(Graph *g, Ant *a) {
         edgeWalkPtr = *e;
         Range r;
         r.assocEdge = edgeWalkPtr;
+        //cout << "Edge " << ++i << endl;
         r.low = sum;
+        //cout << "Low sum " << sum << endl;
         sum += edgeWalkPtr->pLevel + edgeWalkPtr->getOtherSide(vertWalkPtr)->sum; 
         r.high = sum;
+        //cout << "High sum " << sum << endl << endl << endl;
         edges.push_back(r);
     }
     size = edges.size();
-    initialI = size / 2;
+    initialI = size / 2 - 1;
     while (numMoves < 5) {
         //  Select an edge at random and proportional to its pheremone level
         value = rg.IRandom(0,((int) (sum))); // produce a random number between 0 and highest range + 1
