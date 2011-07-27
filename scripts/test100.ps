@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# By: Christopher Jackson
+#	July 26, 2011
+
+doClass() {
+i=1
+while [ $i -le 50 ]
+    do
+    	out="out_${input}_d${d}_instance4_run${i}.out"
+    	touch /home/clj5096/code/bdmst/output/$out
+		cd /home/clj5096/code/bdmst
+    	(time -p ./main input/$input e $d >> output/$out) 2>> output/$out
+    	let i++
+    done
+}
+#Now that it is clean run the input file on desired inputs
+d=10
+input="100estein4.txt"
+doClass
