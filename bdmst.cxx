@@ -977,6 +977,64 @@ void connectHubs(Graph* gFull, Graph* g, vector<Edge*> *tree, unsigned int & tre
     }
 }
 
+vector<Edge*> hope(Graph *g, int d) {
+    Vertex* pVert, *pVert2;
+    vector<Edge*> v, c, inTree;
+    Edge* pEdge;
+    vector<Edge*>::iterator iedge1;
+    bool done = false, didReplenish = true;
+    vector
+    //  Put all edges into a vector
+    populateVector(g, &v);
+    //  Sort edges in ascending order based upon pheromone level
+    sort(v.begin(), v.end(), asc_cmp_plevel);
+    //  Select 5n edges from the end of v( the highest pheromones edges) and put them into c.
+    getCandidateSet(&v,&c,CAN_SIZE);
+    //  Sort edges in descending order based upon cost
+    sort(c.begin(), c.end(), des_cmp_cost);
+    
+    
+    pEdge = c->pop_back();
+    int root1, root2;
+    if ( d%2 == 0 ) {
+        g->root = pEdge->a->data;
+        pEdge->a->depth=0;
+        g->oddRoot = pEdge->b->data;
+        pEdge->b->depth=0;
+    } else {
+        g->root = pEdge->a->data;
+        pEdge->a->depth=0;
+        pEdge->b->depth=1;
+    }
+    pEdge->inTree = true;
+    pEdge->a->inTree = true;
+    pEdge->b->inTree = true;
+    inTree->push_back(pEdge);
+    while(!done) {
+        if ( c->empty() )
+            didReplenish = replenish(c, v, CAN_SIZE);
+        if (!didReplenish)
+            break;
+        for(iedge1 = c->end(); iedge1 > c->begin(); iedge1--) {
+            pEdge = *iedge1;
+            if(pEdge->a->inTree ^ pEdge->b->inTree) {
+                pEdge->a->inTree == true ? pVert = pEdge->a : pVert = pEdge->b;
+                if (pVert->depth <= d/2) {
+                    //  Add this edge into the tree.
+                    pEdge->inTree = true;
+                    pVert2 = pEdge->getOtherSide(pVert);
+                    pVert2->inTree = true;
+                    pVert2->depth = pVert->depth + 1;
+                    inTree->push_back(pEdge);
+                }
+                c->pop_back();
+            }
+        }
+    }
+    return inTree;
+}
+
+
 int find(vector<int> UF, int start){
     while(UF[start] != start)
         start = UF[start];
