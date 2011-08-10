@@ -748,7 +748,7 @@ vector<Edge*> hope(Graph *g, int d) {
     Vertex* pVert, *pVert2;
     vector<Edge*> v, c, inTree;
     Edge* pEdge;
-    vector<Edge*>::iterator iedge1;
+    vector<Edge*>::reverse_iterator iedge1;
     bool done = false, didReplenish = true;
     //  Put all edges into a vector
     populateVector(g, &v);
@@ -780,11 +780,13 @@ vector<Edge*> hope(Graph *g, int d) {
         //cout << "we be looping\n";
         if ( c.empty() ) {
             didReplenish = replenish(&c, &v, g->numNodes);
-           // cout << "Replenished" << endl;
+            //cout << "Replenished" << endl;
         }
         if (!didReplenish)
             break;
-        for(iedge1 = c.end(); iedge1 > c.begin(); iedge1--) {
+        //for(iedge1 = c.end(); iedge1 > c.begin(); iedge1--) {
+        for(iedge1 = c.rbegin(); iedge1 < c.rend(); iedge1++) {
+            //cout << "yay" << endl;
             pEdge = *iedge1;
             if(pEdge->a->inTree ^ pEdge->b->inTree) {
                 pEdge->a->inTree == true ? pVert = pEdge->a : pVert = pEdge->b;
@@ -795,14 +797,14 @@ vector<Edge*> hope(Graph *g, int d) {
                     pVert2->inTree = true;
                     pVert2->depth = pVert->depth + 1;
                     inTree.push_back(pEdge);
-                   // cout << "we added\n";
+                    //cout << "we added\n";
                     break;
                 }
                 c.pop_back();
                 if(inTree.size() == g->numNodes - 1)
                     done=true;
             }
-            if ( iedge1 == c.begin()+1 ) {
+            if ( pEdge == c.front() ) {
                 c.clear();
                 //cout << "We cleared." << endl;
             }
@@ -884,7 +886,7 @@ void move(Graph *g, Ant *a) {
         //cout << "Edge " << ++i << endl;
         r.low = sum;
         //cout << "Low sum " << sum << endl;
-        sum += edgeWalkPtr->pLevel + edgeWalkPtr->getOtherSide(vertWalkPtr)->sum; 
+        sum += edgeWalkPtr->pLevel;// + edgeWalkPtr->getOtherSide(vertWalkPtr)->sum; 
         r.high = sum;
         //cout << "High sum " << sum << endl << endl << endl;
         edges.push_back(r);
