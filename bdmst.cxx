@@ -18,7 +18,6 @@ TRandomMersenne rg(seed);
 
 #include "Graph.cxx"
 #include "Queue.h"
-#include "BinaryHeap.h"
 #include <cmath>
 #include <cstring>
 #include <stack>
@@ -77,7 +76,6 @@ void updatePheromonesGlobal(Graph *g, vector<Edge*> *best, bool improved);
 void printEdge(Edge* e);
 void resetItems(Graph* g, processFile p);
 void compute(Graph* g, int d, processFile p, int instance);
-void heapifyHubs(vector<Hub*> *hubs, vector<Edge*> *c, int & numEdges, BinaryHeap* heap);
 bool replenish(vector<Edge*> *c, vector<Edge*> *v, const unsigned int & CAN_SIZE);
 Edge* remEdge(vector<Edge*> best);
 int find(vector<int> UF, int start);
@@ -85,7 +83,6 @@ int universalSearch(Graph* g, int start);
 void populateVector(Graph* g, vector<Edge*> *v);
 void populateVector_v2(Graph* g, vector<Edge*> *v, int level);
 void getCandidateSet(vector<Edge*> *v, vector<Edge*> *c, const unsigned int & CAN_SIZE);
-void getHubConnections(vector<Hub*> *treeHubs, vector<Edge*> *possConn, vector<Hub*> *hubs);
 vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d);
 vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d);
 vector<Edge*> hope(Graph *g, int d);
@@ -154,7 +151,7 @@ int main( int argc, char *argv[]) {
 void compute(Graph* g, int d, processFile p, int i) {
     maxCost = p.getMax();
     minCost = p.getMin();
-    if((unsigned int) d > g->getNumNodes()) {
+    if((unsigned int) d > g->numNodes) {
         cout << "No need to run this diameter test. Running MST will give you solution, since diameter is greater than number of nodes." << endl;
         exit(1);
     }
@@ -389,27 +386,6 @@ void updatePheromonesPerEdge(Graph *g) {
         }
         vertWalkPtr->updateVerticeWeight();
         vertWalkPtr = vertWalkPtr->pNextVert;
-    }
-}
-
-void getHubConnections(vector<Hub*> *treeHubs, vector<Edge*> *possConn, vector<Hub*> *hubs) {
-    //  Local Variables
-    Vertex *v1, *v2;
-    Edge* pEdge;
-    vector<Edge*>::iterator iedge3;
-
-    //  Logic
-    for(unsigned int i = 0; i < treeHubs->size(); i++) {
-        v1 = (*treeHubs)[i]->vert;
-        for(unsigned int j = i+1; j < treeHubs->size(); j++) {
-            v2 = (*treeHubs)[j]->vert;
-            for(iedge3 = v1->edges.begin(); iedge3 < v1->edges.end(); iedge3++) {
-                pEdge = *iedge3;
-                //cout << "compairing: v1.pEdge: " << pEdge->b->data << ":" << hubs[pEdge->b->data - 1]->inTree << " and v2: " << v2->data << ":"<< hubs[v2->data - 1]->inTree << endl;
-                if(pEdge->b->data == v2->data && (*hubs)[pEdge->b->data - 1]->inTree == true && (*hubs)[v2->data - 1]->inTree == true)
-                    possConn->push_back(pEdge);
-            }
-        }
     }
 }
 
@@ -665,30 +641,6 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d)
             }
             if(!edgeWalkPtr)
                 break; 
-        /*
-        i = levelEdges.size() / 2;
-        if (i%2 != 0)
-        i++;
-        bsint = i;
-        while(true) {
-        cout << "oh shit " << i << endl  ;
-        current = ranges[i];
-        bsint -= bsint/2;
-        if(value < current->low){
-        i -= bsint;
-        }
-        else if(value >= current->high){
-        i += bsint;
-        }
-        else{
-        //  We will use this edge
-        //cout << current->assocEdge->weight << endl;
-        edgeWalkPtr = current->assocEdge;
-        break;
-        }
-        }
-        */
-
          //  We now have an edge that we wish to remove.
          //  Remove the edge
         
@@ -731,7 +683,6 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d)
         }
         //cout << "try number: " << tries << endl;
     }
-    //cout << "\n\n\n\n\n\n\n\n\n\n IM OUT YAY! \n\n\n\n\n\n\n\n\n\n";
     //  reset items
     for(unsigned int k = 0; k < levelEdges.size(); k++) {
         delete ranges[k];
@@ -836,34 +787,6 @@ bool replenish(vector<Edge*> *c, vector<Edge*> *v, const unsigned int & CAN_SIZE
     return true;
 }
 
-void heapifyHubs(vector<Hub*> *hubs, vector<Edge*> *c, int & numEdges, BinaryHeap* heap) {
-    //cout << "in foo\n";
-    vector<Edge*>::iterator iedge1;
-    vector<Hub*>::iterator ihubs2;
-    Edge* pEdge;
-    Hub* pHub;
-    int vertIndex;
-    //  Get Degree of each vertice in candidate set
-    for(iedge1 = c->begin(); iedge1 < c->end(); iedge1++) {
-        pEdge = *iedge1;
-        //  Handle Source
-        vertIndex = pEdge->a->data; // the vertice number uniquely identifies each vertice
-        (*hubs)[vertIndex - 1]->edges.push_back(pEdge);
-        //  Handle Destination
-        vertIndex = pEdge->b->data; // the vertice number uniquely identifies each vertice
-        (*hubs)[vertIndex - 1]->edges.push_back(pEdge);
-        numEdges += 2;
-    }
-    c->clear();
-    //  First get rid of vertices with zero edges from candidate set
-    for(ihubs2 = hubs->begin(); ihubs2 < hubs->end(); ihubs2++) {
-        pHub = *ihubs2;
-        if(pHub->edges.size() != 0) {
-            heap->insert(pHub);
-        }
-    }
-}
-
 void move(Graph *g, Ant *a) {
     Vertex* vertWalkPtr;
     Vertex* vDest;
@@ -895,18 +818,7 @@ void move(Graph *g, Ant *a) {
     initialI = size / 2 - 1;
     while (numMoves < 5) {
         //  Select an edge at random and proportional to its pheremone level
-        value = rg.IRandom(0,((int) (sum))); // produce a random number between 0 and highest range + 1
-        //value = fmod(rand(),(sum+1));
-        //cout << value << endl;
-        /*for (unsigned int i = 0; i < edges.size(); i++) {
-            current = &edges[i];
-            if (value >= current->low && value < current->high) {
-                //  We will use this edge
-                edgeWalkPtr = current->assocEdge;
-                break;
-            }
-        }*/
-
+        value = rg.IRandom(0,((int) (sum)));
         i = initialI;
         if(i%2 != 0)
             i++;

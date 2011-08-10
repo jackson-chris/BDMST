@@ -8,13 +8,11 @@ Authors: Christopher Jackson, Jason Jones
 
 To Do:
 
--See how we are doing compared to other papers.
 -Create script to gather statistics.
 -Code optimization functions.
 -remove private data members
 -remove function calls where the result doesn't change to improve performance
 -get rid of functions/classes/structs that are no longer in use
 -finish deconstructors
--change from vector to array for heap
 -ignore 0 position in array if deciding to start with 1
 -max and min for tree costs when gathering statistics
