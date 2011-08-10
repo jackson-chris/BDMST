@@ -78,14 +78,12 @@ void resetItems(Graph* g, processFile p);
 void compute(Graph* g, int d, processFile p, int instance);
 bool replenish(vector<Edge*> *c, vector<Edge*> *v, const unsigned int & CAN_SIZE);
 Edge* remEdge(vector<Edge*> best);
-int find(vector<int> UF, int start);
-int universalSearch(Graph* g, int start);
 void populateVector(Graph* g, vector<Edge*> *v);
 void populateVector_v2(Graph* g, vector<Edge*> *v, int level);
 void getCandidateSet(vector<Edge*> *v, vector<Edge*> *c, const unsigned int & CAN_SIZE);
 vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d);
 vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d);
-vector<Edge*> hope(Graph *g, int d);
+vector<Edge*> buildTree(Graph *g, int d);
 
 int main( int argc, char *argv[]) {
     //  Process input from command line
@@ -251,7 +249,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         }
         updatePheromonesPerEdge(g);
         //  Tree Construction Stage
-        current = hope(g, d);
+        current = buildTree(g, d);
         //  Get new tree cost
         for ( ed = current.begin(); ed < current.end(); ed++ ) {
             edgeWalkPtr = *ed;
@@ -283,9 +281,9 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         totalCycles++;
         cycles++;
         treeCost = 0;
-    }
-
-    // Test if it meets the diameter bound.
+    }    
+    //  RUN FIRST LOCAL OPT
+    
     Graph* gTest = new Graph();
     //  add all vertices
     Vertex* pVert = g->getFirst();
@@ -300,14 +298,38 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
     }
     gTest->root = bestRoot;
     gTest->oddRoot = bestOddRoot;
-
     cout << "This is the list of edges BEFORE local optimization: " << endl;
     for_each(best.begin(), best.end(), printEdge);
     cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
     cout << "RESULT: Diameter: " << gTest->testDiameter() << endl;
-    //best = opt_one_edge_v1(g, gTest, &best, best.size(), d);
     best = opt_one_edge_v2(g, gTest, &best, d);
-    cout << "This is the list of edges AFTER local optimization: " << endl;
+    cout << "This is the list of edges AFTER local optimization v2: " << endl;
+    for_each(best.begin(), best.end(), printEdge);
+    bestCost = 0;
+    for ( ed = best.begin(); ed < best.end(); ed++ ) {
+        edgeWalkPtr = *ed;
+        bestCost+=edgeWalkPtr->weight;
+    }
+    cout << "RESULT" << instance << ": Cost: " << bestCost << endl;
+    cout << "RESULT: Diameter: " << gTest->testDiameter() << endl;
+    
+    // RUN OTHER LOC OPT
+    Graph* gTest2 = new Graph();
+    //  add all vertices
+    pVert = gTest->getFirst();
+    while(pVert) {
+        gTest2->insertVertex(pVert->data);
+        pVert = pVert->pNextVert;
+    }
+    //  Now add edges to graph.
+    for(iedge1 = best.begin(); iedge1 < best.end(); iedge1++) {
+        pEdge = *iedge1;
+        gTest2->insertEdge(pEdge->a->data, pEdge->b->data, pEdge->weight, pEdge->pLevel);
+    }
+    gTest2->root = bestRoot;
+    gTest2->oddRoot = bestOddRoot;
+    best = opt_one_edge_v1(g, gTest2, &best, best.size(), d);
+    cout << "This is the list of edges AFTER local optimization v1: " << endl;
     for_each(best.begin(), best.end(), printEdge);
     bestCost = 0;
     for ( ed = best.begin(); ed < best.end(); ed++ ) {
@@ -480,10 +502,8 @@ vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsign
     }
 
     while (noImp < ONE_EDGE_OPT_BOUND ) {//} && tries < ONE_EDGE_OPT_MAX) {
-    //  Pick an edge to remove at random favoring edges with low pheremones
-    //  First we determine the ranges for each edge
         value = rg.IRandom(0,((int) (sum))); // produce a random number between 0 and highest range
-        i = treeCount / 2;
+        i = treeCount / 2 - 1;
         if (i%2 != 0)
             i++;
         bsint = i;
@@ -695,7 +715,7 @@ populateVector(gOpt,&newTree);
 return newTree;
 }
 
-vector<Edge*> hope(Graph *g, int d) {
+vector<Edge*> buildTree(Graph *g, int d) {
     Vertex* pVert, *pVert2;
     vector<Edge*> v, c, inTree;
     Edge* pEdge;
@@ -762,14 +782,6 @@ vector<Edge*> hope(Graph *g, int d) {
         }
     }
     return inTree;
-}
-
-
-int find(vector<int> UF, int start){
-    while(UF[start] != start)
-        start = UF[start];
-
-    return start;
 }
 
 bool replenish(vector<Edge*> *c, vector<Edge*> *v, const unsigned int & CAN_SIZE) {
