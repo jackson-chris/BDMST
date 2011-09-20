@@ -44,7 +44,7 @@ const double P_UPDATE_EVAP = 1.05;
 const double P_UPDATE_ENHA = 1.05;
 const unsigned int TABU_MODIFIER = 5;
 const int MAX_CYCLES = 2500; // change back to 2500
-const int ONE_EDGE_OPT_BOUND = 20; // was 500
+const int ONE_EDGE_OPT_BOUND = 500; // was 500
 const int ONE_EDGE_OPT_MAX = 2500;
 const int K = 250;
 
