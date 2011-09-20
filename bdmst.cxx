@@ -728,8 +728,8 @@ vector<Edge*> buildTree(Graph *g, int d) {
     //  Select 5n edges from the end of v( the highest pheromones edges) and put them into c.
     getCandidateSet(&v,&c,g->numNodes);
     //  Sort edges in descending order based upon cost
-    sort(c.begin(), c.end(), des_cmp_cost);
-    
+    // sort(c.begin(), c.end(), des_cmp_cost);
+    sort(c.begin(), c.end(), asc_cmp_plevel); 
     
     pEdge = c.back();
     c.pop_back();
