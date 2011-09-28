@@ -55,6 +55,9 @@ double enha_factor = 1.5;
 double maxCost = 0;
 double minCost = std::numeric_limits<double>::infinity();
 
+vector< vector<Range>* > vert_ranges;
+double cost;
+
 /*//  Variables for proportional selection
 int32 seed = time(0), rand_pher;
 //int32 seed = 1310007585;
@@ -84,6 +87,7 @@ void getCandidateSet(vector<Edge*> *v, vector<Edge*> *c, const unsigned int & CA
 vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d);
 vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d);
 vector<Edge*> buildTree(Graph *g, int d);
+void updateRanges(Graph *g);
 
 int main( int argc, char *argv[]) {
     //  Process input from command line
@@ -201,13 +205,17 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
     double treeCost = 0;
     bool newBest = false;
     const int s = 75;
+    double sum = 0.0;
     int bestRoot = -1, bestOddRoot = -1;
     vector<Edge*> best, current;
     Vertex *vertWalkPtr;
     Edge *edgeWalkPtr, *pEdge;
     vector<Ant*> ants;
     vector<Edge*>::iterator e, ed, iedge1;
-
+    vector<Range> *temp;
+    // Clear ranges
+    vert_ranges.clear();
+    
     Ant *a;
     //  Assign one ant to each vertex
     vertWalkPtr = g->getFirst();
@@ -218,6 +226,8 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         a->location = vertWalkPtr;
         a->vQueue = new Queue(TABU_MODIFIER);
         ants.push_back(a);
+        //  Create a range for this vertex
+        temp = new vector<Range>();
         //  Initialize pheremone level of each edge, and set pUdatesNeeded to zero
         for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
             edgeWalkPtr = *e;
@@ -225,7 +235,17 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
                 edgeWalkPtr->pUpdatesNeeded = 0;
                 edgeWalkPtr->pLevel = (maxCost - edgeWalkPtr->weight) + ((maxCost - minCost) / 3);
             }
+            // Create a range for each edge.
+            Range r;
+            r.assocEdge = edgeWalkPtr;
+            r.low = sum;
+            sum += edgeWalkPtr->pLevel;// + edgeWalkPtr->getOtherSide(vertWalkPtr)->sum; 
+            r.high = sum;
+            // Put this range in the vector for this vertex
+            temp->push_back(r);
         }
+        // Add the range for this vertex to vert_ranges
+        vert_ranges.push_back(temp);
         //  Done with this vertex's edges; move on to next vertex
         vertWalkPtr->updateVerticeWeight();
         vertWalkPtr = vertWalkPtr->pNextVert;
@@ -268,9 +288,11 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         if (cycles % 100 == 0) {
             if(newBest) {
                 updatePheromonesGlobal(g, &best, false);
+                updateRanges(g);
             } 
             else {
                 updatePheromonesGlobal(g, &best, true);
+                updateRanges(g);
             }
             newBest = false;
         }
@@ -381,6 +403,34 @@ void updatePheromonesGlobal(Graph *g, vector<Edge*> *best, bool improved) {
     }
 }
 
+void updateRanges(Graph *g) {
+    Vertex *vertWalkPtr = g->getFirst();
+    vector<Edge*>::iterator ex;
+    Edge *edgeWalkPtr;
+    vector<Range> *temp;
+    double sum = 0.0;
+    // Reset all information on ranges
+    vert_ranges.clear();
+    while (vertWalkPtr) {
+        // Create a new vector of ranges for this vertex
+        temp = new vector<Range>();
+        for ( ex = vertWalkPtr->edges.begin() ; ex < vertWalkPtr->edges.end(); ex++ ) {
+            edgeWalkPtr = *ex;
+            //  Update range values for this edge
+            Range r;
+            r.assocEdge = edgeWalkPtr;
+            r.low = sum;
+            sum += edgeWalkPtr->pLevel;// + edgeWalkPtr->getOtherSide(vertWalkPtr)->sum; 
+            r.high = sum;
+            // Put this range in the vector for this vertex
+            temp->push_back(r);
+        }
+        //  Put the vector of ranges into vert_ranges.
+        vert_ranges.push_back(temp);
+        vertWalkPtr->updateVerticeWeight();
+        vertWalkPtr = vertWalkPtr->pNextVert;
+    }
+}
 
 void updatePheromonesPerEdge(Graph *g) {
     //  Local Variables
@@ -390,8 +440,13 @@ void updatePheromonesPerEdge(Graph *g) {
     double IP;
     vector<Edge*>::iterator ex;
     Edge *edgeWalkPtr;
-
+    vector<Range> *temp;
+    double sum = 0.0;
+    // Reset all information on ranges
+    vert_ranges.clear();
     while (vertWalkPtr) {
+        // Create a new vector of ranges for this vertex
+        temp = new vector<Range>();
         for ( ex = vertWalkPtr->edges.begin() ; ex < vertWalkPtr->edges.end(); ex++ ) {
             edgeWalkPtr = *ex;
             if (edgeWalkPtr->a == vertWalkPtr) {
@@ -405,7 +460,18 @@ void updatePheromonesPerEdge(Graph *g) {
                 //  Done updating this edge reset multiplier
                 edgeWalkPtr->pUpdatesNeeded = 0;
             }
+            //  Update range values for this edge
+            Range r;
+            r.assocEdge = edgeWalkPtr;
+            r.low = sum;
+            sum += edgeWalkPtr->pLevel;// + edgeWalkPtr->getOtherSide(vertWalkPtr)->sum; 
+            r.high = sum;
+            // Put this range in the vector for this vertex
+            temp->push_back(r);
         }
+        //  Put the vector of ranges into vert_ranges.
+        vert_ranges.push_back(temp);
+        
         vertWalkPtr->updateVerticeWeight();
         vertWalkPtr = vertWalkPtr->pNextVert;
     }
@@ -800,33 +866,23 @@ bool replenish(vector<Edge*> *c, vector<Edge*> *v, const unsigned int & CAN_SIZE
 }
 
 void move(Graph *g, Ant *a) {
+    cerr << "in move\n";
     Vertex* vertWalkPtr;
     Vertex* vDest;
     vertWalkPtr = a->location;
     Edge* edgeWalkPtr = NULL;
     int numMoves = 0;
+    int index = vertWalkPtr->data - 1;
     int size = 0, initialI = 0;
     bool alreadyVisited;
     vector<Edge*>::iterator e;
-    double sum = 0.0;
-    vector<Range> edges;
+    vector<Range> *edges = vert_ranges[index];
+    double sum = edges->back().high;
+    cerr << "moving ant on node: " << index << ", sum is: " << sum << endl;
     int value;
     int i = 0, bsint = 0;
     Range* current;
-    //  Determine Ranges for each edge
-    for ( e = vertWalkPtr->edges.begin() ; e < vertWalkPtr->edges.end(); e++ ) {
-        edgeWalkPtr = *e;
-        Range r;
-        r.assocEdge = edgeWalkPtr;
-        //cout << "Edge " << ++i << endl;
-        r.low = sum;
-        //cout << "Low sum " << sum << endl;
-        sum += edgeWalkPtr->pLevel;// + edgeWalkPtr->getOtherSide(vertWalkPtr)->sum; 
-        r.high = sum;
-        //cout << "High sum " << sum << endl << endl << endl;
-        edges.push_back(r);
-    }
-    size = edges.size();
+    size = edges->size();
     initialI = size / 2 - 1;
     while (numMoves < 5) {
         //  Select an edge at random and proportional to its pheremone level
@@ -836,10 +892,10 @@ void move(Graph *g, Ant *a) {
             i++;
         bsint = i;
         while(true){
-            current = &edges[i];
+            current = &(*edges)[i];
             bsint -= bsint/2;
             //cout << value << ", " << current->low << ", " << current->high << endl;
-            //cout << "i = " << i << " bsint = " << bsint << endl;
+           // cout << "i = " << i << " bsint = " << bsint << endl;
             if(value < current->low){
                 i -= bsint;
             }
@@ -848,7 +904,7 @@ void move(Graph *g, Ant *a) {
             }
             else{
             //  We will use this edge
-                //cout << current->assocEdge->weight << endl;
+            //    cout << current->assocEdge->weight << endl;
                 edgeWalkPtr = current->assocEdge;
                 break;
             } } 
