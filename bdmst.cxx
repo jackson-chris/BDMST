@@ -205,7 +205,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
     double treeCost = 0;
     bool newBest = false;
     const int s = 75;
-    double sum = 0.0;
+    double sum;
     int bestRoot = -1, bestOddRoot = -1;
     vector<Edge*> best, current;
     Vertex *vertWalkPtr;
@@ -220,6 +220,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
     //  Assign one ant to each vertex
     vertWalkPtr = g->getFirst();
     for (unsigned int i = 0; i < g->getNumNodes(); i++) {
+        sum = 0.0;
         a = new Ant;
         a->data = i +1;
         a->nonMove = 0;
@@ -408,10 +409,11 @@ void updateRanges(Graph *g) {
     vector<Edge*>::iterator ex;
     Edge *edgeWalkPtr;
     vector<Range> *temp;
-    double sum = 0.0;
+    double sum;
     // Reset all information on ranges
     vert_ranges.clear();
     while (vertWalkPtr) {
+        sum = 0.0;
         // Create a new vector of ranges for this vertex
         temp = new vector<Range>();
         for ( ex = vertWalkPtr->edges.begin() ; ex < vertWalkPtr->edges.end(); ex++ ) {
@@ -441,10 +443,11 @@ void updatePheromonesPerEdge(Graph *g) {
     vector<Edge*>::iterator ex;
     Edge *edgeWalkPtr;
     vector<Range> *temp;
-    double sum = 0.0;
+    double sum;
     // Reset all information on ranges
     vert_ranges.clear();
     while (vertWalkPtr) {
+        sum =0.0;
         // Create a new vector of ranges for this vertex
         temp = new vector<Range>();
         for ( ex = vertWalkPtr->edges.begin() ; ex < vertWalkPtr->edges.end(); ex++ ) {
@@ -866,7 +869,7 @@ bool replenish(vector<Edge*> *c, vector<Edge*> *v, const unsigned int & CAN_SIZE
 }
 
 void move(Graph *g, Ant *a) {
-    cerr << "in move\n";
+    //cerr << "in move\n";
     Vertex* vertWalkPtr;
     Vertex* vDest;
     vertWalkPtr = a->location;
@@ -878,11 +881,12 @@ void move(Graph *g, Ant *a) {
     vector<Edge*>::iterator e;
     vector<Range> *edges = vert_ranges[index];
     double sum = edges->back().high;
-    cerr << "moving ant on node: " << index << ", sum is: " << sum << endl;
     int value;
     int i = 0, bsint = 0;
+    int test = 0;
     Range* current;
     size = edges->size();
+    //cerr << "moving ant on node: " << index << ", sum is: " << sum << ", size is: " << size <<endl;
     initialI = size / 2 - 1;
     while (numMoves < 5) {
         //  Select an edge at random and proportional to its pheremone level
@@ -891,11 +895,11 @@ void move(Graph *g, Ant *a) {
         if(i%2 != 0)
             i++;
         bsint = i;
-        while(true){
+        while(true && (test++ < 25)){
             current = &(*edges)[i];
             bsint -= bsint/2;
-            //cout << value << ", " << current->low << ", " << current->high << endl;
-           // cout << "i = " << i << " bsint = " << bsint << endl;
+            //cout << "random value: " << value << ", current->low: " << current->low << ", current->high: " << current->high << endl;
+            //cout << "i = " << i << " bsint = " << bsint << endl;
             if(value < current->low){
                 i -= bsint;
             }
@@ -912,6 +916,7 @@ void move(Graph *g, Ant *a) {
         if (a->nonMove > 4) {
             a->vQueue->reset();
         }
+        //cout << "test is: " << test << endl;
         //  We have a randomly selected edge, if that edges hasnt already been visited by this ant traverse the edge
         vDest = edgeWalkPtr->getOtherSide(vertWalkPtr);
         alreadyVisited = false;
