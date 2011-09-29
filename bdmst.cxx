@@ -888,7 +888,6 @@ void move(Graph *g, Ant *a) {
     double sum = edges->back().high;
     int value;
     int i = 0, bsint = 0;
-    int test = 0;
     Range* current;
     size = edges->size();
     //cerr << "moving ant on node: " << index << ", sum is: " << sum << ", size is: " << size <<endl;
@@ -900,7 +899,7 @@ void move(Graph *g, Ant *a) {
         if(i%2 != 0)
             i++;
         bsint = i;
-        while(true && (test++ < 25)){
+        while(true){
             current = &(*edges)[i];
             bsint -= bsint/2;
             //cout << "random value: " << value << ", current->low: " << current->low << ", current->high: " << current->high << endl;
