@@ -1,3 +1,11 @@
+//
+//  main.cpp
+//  bdmst
+//
+//  Created by Christopher Jackson on 9/28/11.
+//  Copyright 2011 Student. All rights reserved.
+//
+
 //  File: bdmst.cxx
 //  Author: Christopher Lee Jackson & Jason Jones
 //  Description: This is our implementation of our ant based algorithm to aproximate the BDMST problem.
@@ -8,7 +16,6 @@
 #include <cassert>
 #include <algorithm>
 #include <vector>
-#include "randomc.h"
 #include "mersenne.cxx"
 
 //  Variables for proportional selection
@@ -59,9 +66,9 @@ vector< vector<Range>* > vert_ranges;
 double cost;
 
 /*//  Variables for proportional selection
-int32 seed = time(0), rand_pher;
-//int32 seed = 1310007585;
-TRandomMersenne rg(seed);*/
+ int32 seed = time(0), rand_pher;
+ //int32 seed = 1310007585;
+ TRandomMersenne rg(seed);*/
 
 int cycles = 1;
 int totalCycles = 1;
@@ -147,6 +154,8 @@ int main( int argc, char *argv[]) {
         p.processFileOld(g, inFile);
         compute(g, d, p, 0);
     }
+    delete fileName;
+    delete fileType;
     return 0;
 }
 
@@ -166,11 +175,11 @@ void compute(Graph* g, int d, processFile p, int i) {
 }
 
 /*
-*
-*
-*   For Each, Sort - Helper Functions
-*
-*/
+ *
+ *
+ *   For Each, Sort - Helper Functions
+ *
+ */
 bool asc_cmp_plevel(Edge *a, Edge *b) {
     return (a->pLevel < b->pLevel);
 }
@@ -253,7 +262,7 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
     }
     while (totalCycles <= 10000 && cycles <= MAX_CYCLES) { 
         //if(totalCycles % 25 == 0) 
-            //cerr << "CYCLE " << totalCycles << endl;
+        //cerr << "CYCLE " << totalCycles << endl;
         //  Exploration Stage
         for (int step = 1; step <= s; step++) {
             if (step == s/3 || step == (2*s)/3) {
@@ -382,16 +391,16 @@ void updatePheromonesGlobal(Graph *g, vector<Edge*> *best, bool improved) {
     double rand_evap_factor;
     double IP;
     vector<Edge*>::iterator ex;
-
+    
     //  For each edge in the best tree update pheromone levels
     for ( ex = best->begin() ; ex < best->end(); ex++ ) {
         e = *ex;
         IP = (maxCost - e->weight) + ((maxCost - minCost) / 3);
         if (improved) {
-        //  IMPROVEMENT so Apply Enhancement
+            //  IMPROVEMENT so Apply Enhancement
             e->pLevel = enha_factor*e->pLevel;
         } else {
-        //  NO IMPROVEMENTS so Apply Evaporation
+            //  NO IMPROVEMENTS so Apply Evaporation
             rand_evap_factor = XMin + rg.BRandom() * (XMax - XMin) / RAND_MAX;
             e->pLevel = rand_evap_factor*e->pLevel;
         }
@@ -409,28 +418,28 @@ void updateRanges(Graph *g) {
     vector<Edge*>::iterator ex;
     Edge *edgeWalkPtr;
     vector<Range> *temp;
+    Range *r;
+    int v = 0;
+    int i;
     double sum;
-    // Reset all information on ranges
-    vert_ranges.clear();
     while (vertWalkPtr) {
         sum = 0.0;
-        // Create a new vector of ranges for this vertex
-        temp = new vector<Range>();
-        for ( ex = vertWalkPtr->edges.begin() ; ex < vertWalkPtr->edges.end(); ex++ ) {
+        // Update the vector of ranges for this vertex
+        temp = vert_ranges[v];
+        for ( ex = vertWalkPtr->edges.begin(), i = 0 ; ex < vertWalkPtr->edges.end(); ex++, i++ ) {
             edgeWalkPtr = *ex;
             //  Update range values for this edge
-            Range r;
-            r.assocEdge = edgeWalkPtr;
-            r.low = sum;
+            r = &(*temp)[i];
+            r->assocEdge = edgeWalkPtr;
+            r->low = sum;
             sum += edgeWalkPtr->pLevel;// + edgeWalkPtr->getOtherSide(vertWalkPtr)->sum; 
-            r.high = sum;
+            r->high = sum;
             // Put this range in the vector for this vertex
-            temp->push_back(r);
         }
         //  Put the vector of ranges into vert_ranges.
-        vert_ranges.push_back(temp);
         vertWalkPtr->updateVerticeWeight();
         vertWalkPtr = vertWalkPtr->pNextVert;
+        v++;
     }
 }
 
@@ -441,16 +450,17 @@ void updatePheromonesPerEdge(Graph *g) {
     double pMin = (maxCost - minCost)/3;
     double IP;
     vector<Edge*>::iterator ex;
+    vector<Range>::iterator iv;
     Edge *edgeWalkPtr;
     vector<Range> *temp;
     double sum;
-    // Reset all information on ranges
-    vert_ranges.clear();
+    int i, v = 0;
+    Range *r;
     while (vertWalkPtr) {
         sum =0.0;
         // Create a new vector of ranges for this vertex
-        temp = new vector<Range>();
-        for ( ex = vertWalkPtr->edges.begin() ; ex < vertWalkPtr->edges.end(); ex++ ) {
+        temp = vert_ranges[v];
+        for ( ex = vertWalkPtr->edges.begin(), i = 0 ; ex < vertWalkPtr->edges.end(); ex++, i++ ) {
             edgeWalkPtr = *ex;
             if (edgeWalkPtr->a == vertWalkPtr) {
                 IP = (maxCost - edgeWalkPtr->weight) + ((maxCost - minCost) / 3);
@@ -464,17 +474,12 @@ void updatePheromonesPerEdge(Graph *g) {
                 edgeWalkPtr->pUpdatesNeeded = 0;
             }
             //  Update range values for this edge
-            Range r;
-            r.assocEdge = edgeWalkPtr;
-            r.low = sum;
+            r = &(*temp)[i];
+            r->assocEdge = edgeWalkPtr;
+            r->low = sum;
             sum += edgeWalkPtr->pLevel;// + edgeWalkPtr->getOtherSide(vertWalkPtr)->sum; 
-            r.high = sum;
-            // Put this range in the vector for this vertex
-            temp->push_back(r);
+            r->high = sum;
         }
-        //  Put the vector of ranges into vert_ranges.
-        vert_ranges.push_back(temp);
-        
         vertWalkPtr->updateVerticeWeight();
         vertWalkPtr = vertWalkPtr->pNextVert;
     }
@@ -569,7 +574,7 @@ vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsign
         edgeWalkPtr = *e;
         edgeWalkPtr->inTree = true;
     }
-
+    
     while (noImp < ONE_EDGE_OPT_BOUND ) {//} && tries < ONE_EDGE_OPT_MAX) {
         value = rg.IRandom(0,((int) (sum))); // produce a random number between 0 and highest range
         i = treeCount / 2 - 1;
@@ -577,7 +582,7 @@ vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsign
             i++;
         bsint = i;
         while(true) {
-        //cout << "oh shit " << i << "treeCount " << treeCount << endl  ;
+            //cout << "oh shit " << i << "treeCount " << treeCount << endl  ;
             current = ranges[i];
             bsint -= bsint/2;
             if(value < current->low){
@@ -587,10 +592,10 @@ vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsign
                 i += bsint;
             }
             else{
-            //  We will use this edge
-            //cout << current->assocEdge->weight << endl;
+                //  We will use this edge
+                //cout << current->assocEdge->weight << endl;
                 edgeWalkPtr = current->assocEdge;
-            break;
+                break;
             }
         }
         //  We now have an edge that we wish to remove.
@@ -598,7 +603,7 @@ vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsign
         gOpt->removeEdge(edgeWalkPtr->a->data, edgeWalkPtr->b->data);
         //  Try adding new edge if it improves the tree and doesn't violate the diameter constraint keep it.
         for (int j=0; j < K; j++) {
-        //  select a random edge, if its weight is less than the edge we just removed use it to try and improve tree.
+            //  select a random edge, if its weight is less than the edge we just removed use it to try and improve tree.
             value = rg.IRandom(0, numEdge - 1);
             if (v[value]->weight < edgeWalkPtr->weight && v[value]->inTree == false ) {
                 gOpt->insertEdge(v[value]->a->data, v[value]->b->data, v[value]->weight, v[value]->pLevel);
@@ -647,7 +652,7 @@ vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsign
             noImp++;
             gOpt->insertEdge(edgeWalkPtr->a->data, edgeWalkPtr->b->data, edgeWalkPtr->weight, edgeWalkPtr->pLevel);
         }
-            tries++;
+        tries++;
     }
     //cout << "RESULT: Diameter: " << gOpt->testDiameter() << endl;
     //gOpt->print();
@@ -672,8 +677,8 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d)
     Range** ranges;
     int tabu_size = (int)(g->numNodes*.10);
     Queue* tQueue = new Queue(tabu_size);
-
-
+    
+    
     for(int l = 0; l < ONE_EDGE_OPT_BOUND; l++) {
         levelRemove = rg.IRandom(1,((int) (gOpt->height - 1)));
         levelAdd = levelRemove;
@@ -689,7 +694,7 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d)
         }
         //cout << "Root" << gOpt->root << endl;
         //cout << "Odd Root " << gOpt->oddRoot << endl;
-
+        
         if(levelEdges.size() == 0){
             cout << "woops." << endl;
             //populateVector(gOpt,&newTree);
@@ -716,8 +721,8 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d)
         }
         //cout << levelEdges.size() << endl;
         while (tries < ONE_EDGE_OPT_MAX && updates < 30) {
-        //  Pick an edge to remove at random favoring edges with low pheremones
-        //  First we determine the ranges for each edge
+            //  Pick an edge to remove at random favoring edges with low pheremones
+            //  First we determine the ranges for each edge
             edgeWalkPtr = NULL;
             possEdges.clear();
             value = rg.IRandom(0,((int) (sum))); // produce a random number between 0 and highest range
@@ -730,58 +735,58 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d)
             }
             if(!edgeWalkPtr)
                 break; 
-         //  We now have an edge that we wish to remove.
-         //  Remove the edge
-        
-        gOpt->removeEdge(edgeWalkPtr->a->data, edgeWalkPtr->b->data);
-        //  update tabu list
-        tQueue->push(edgeWalkPtr->a->data);
-        tQueue->push(edgeWalkPtr->b->data);
-        // find out what vertice we have just cut from.
-        vertWalkPtr = edgeWalkPtr->a->depth > edgeWalkPtr->b->depth ? g->nodes[edgeWalkPtr->a->data] : g->nodes[edgeWalkPtr->b->data];
-        // Noww get all possible edges for that vertex
-        for( e = vertWalkPtr->edges.begin(); e < vertWalkPtr->edges.end(); e++) {
-            ePtr = *e;
-            if(gOpt->nodes[ePtr->getOtherSide(vertWalkPtr)->data]->depth <= levelAdd)
-                possEdges.push_back(ePtr);
-        }
-        sort(possEdges.begin(), possEdges.end(), des_cmp_cost);
-        //cout << endl;
-        //for_each(possEdges.begin(), possEdges.end(), printEdge);
-        //cout << endl;
-        ePtr = possEdges.back();
-        //for(unsigned int i = 0; i < possEdges.size(); i++)
-            //cout << "possEdges: " << possEdges[i]->a->data << ", " << possEdges[i]->b->data << " " << possEdges[i]->inTree << endl;
-        while(ePtr->inTree && !possEdges.empty()){
-            possEdges.pop_back();
+            //  We now have an edge that we wish to remove.
+            //  Remove the edge
+            
+            gOpt->removeEdge(edgeWalkPtr->a->data, edgeWalkPtr->b->data);
+            //  update tabu list
+            tQueue->push(edgeWalkPtr->a->data);
+            tQueue->push(edgeWalkPtr->b->data);
+            // find out what vertice we have just cut from.
+            vertWalkPtr = edgeWalkPtr->a->depth > edgeWalkPtr->b->depth ? g->nodes[edgeWalkPtr->a->data] : g->nodes[edgeWalkPtr->b->data];
+            // Noww get all possible edges for that vertex
+            for( e = vertWalkPtr->edges.begin(); e < vertWalkPtr->edges.end(); e++) {
+                ePtr = *e;
+                if(gOpt->nodes[ePtr->getOtherSide(vertWalkPtr)->data]->depth <= levelAdd)
+                    possEdges.push_back(ePtr);
+            }
+            sort(possEdges.begin(), possEdges.end(), des_cmp_cost);
+            //cout << endl;
+            //for_each(possEdges.begin(), possEdges.end(), printEdge);
+            //cout << endl;
             ePtr = possEdges.back();
+            //for(unsigned int i = 0; i < possEdges.size(); i++)
+            //cout << "possEdges: " << possEdges[i]->a->data << ", " << possEdges[i]->b->data << " " << possEdges[i]->inTree << endl;
+            while(ePtr->inTree && !possEdges.empty()){
+                possEdges.pop_back();
+                ePtr = possEdges.back();
+            }
+            //cout << "Old Edge" << edgeWalkPtr->a->data << ", " << edgeWalkPtr->b->data << "\t" << edgeWalkPtr->weight << endl;
+            //cout << "New Edge" << ePtr->a->data << ", " << ePtr->b->data << "\t" << ePtr->weight << endl;
+            //cout << "Depth of new a " << ePtr->a->depth << "Depth of new b " << e
+            if(edgeWalkPtr->weight > ePtr->weight) {
+                cout << "we improved.\n";
+                gOpt->insertEdge(ePtr->a->data, ePtr->b->data, ePtr->weight, ePtr->pLevel);
+                updates++;
+                break;
+            }
+            else {
+                gOpt->insertEdge(edgeWalkPtr->a->data, edgeWalkPtr->b->data, edgeWalkPtr->weight, edgeWalkPtr->pLevel);
+                tries++;
+                //cout << "we failed.\n";
+            }
+            //cout << "try number: " << tries << endl;
         }
-        //cout << "Old Edge" << edgeWalkPtr->a->data << ", " << edgeWalkPtr->b->data << "\t" << edgeWalkPtr->weight << endl;
-        //cout << "New Edge" << ePtr->a->data << ", " << ePtr->b->data << "\t" << ePtr->weight << endl;
-        //cout << "Depth of new a " << ePtr->a->depth << "Depth of new b " << e
-        if(edgeWalkPtr->weight > ePtr->weight) {
-            cout << "we improved.\n";
-            gOpt->insertEdge(ePtr->a->data, ePtr->b->data, ePtr->weight, ePtr->pLevel);
-            updates++;
-            break;
+        //  reset items
+        for(unsigned int k = 0; k < levelEdges.size(); k++) {
+            delete ranges[k];
         }
-        else {
-            gOpt->insertEdge(edgeWalkPtr->a->data, edgeWalkPtr->b->data, edgeWalkPtr->weight, edgeWalkPtr->pLevel);
-            tries++;
-            //cout << "we failed.\n";
-        }
-        //cout << "try number: " << tries << endl;
+        delete []ranges;
+        levelEdges.clear();
+        possEdges.clear();
     }
-    //  reset items
-    for(unsigned int k = 0; k < levelEdges.size(); k++) {
-        delete ranges[k];
-    }
-    delete []ranges;
-    levelEdges.clear();
-    possEdges.clear();
-}
-populateVector(gOpt,&newTree);
-return newTree;
+    populateVector(gOpt,&newTree);
+    return newTree;
 }
 
 vector<Edge*> buildTree(Graph *g, int d) {
@@ -907,8 +912,8 @@ void move(Graph *g, Ant *a) {
                 i += bsint;
             }
             else{
-            //  We will use this edge
-            //    cout << current->assocEdge->weight << endl;
+                //  We will use this edge
+                //    cout << current->assocEdge->weight << endl;
                 edgeWalkPtr = current->assocEdge;
                 break;
             } } 
@@ -941,3 +946,4 @@ void move(Graph *g, Ant *a) {
         }
     }
 }
+
