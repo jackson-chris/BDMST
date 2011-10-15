@@ -52,7 +52,7 @@ const double P_UPDATE_ENHA = 1.05;
 const unsigned int TABU_MODIFIER = 5;
 const int MAX_CYCLES = 2500; // change back to 2500
 const int ONE_EDGE_OPT_BOUND = 500; // was 500
-const int ONE_EDGE_OPT_MAX = 2500;
+const int ONE_EDGE_OPT_MAX = 500;
 const int K = 250;
 
 int instance = 0;
@@ -665,12 +665,13 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d)
     Edge* edgeWalkPtr = NULL, *ePtr = NULL;
     vector<Edge*> newTree, possEdges;
     int tries;
+    int bsint, i;
     int levelRemove;
     int levelAdd;
     vector<Edge*>::iterator e;
     double sum;
     int value, updates;
-    Range* rWalk;
+    Range* rWalk, *current;
     int q; 
     vector<Edge*> levelEdges;
     Vertex* vertWalkPtr;
@@ -726,15 +727,44 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d)
             edgeWalkPtr = NULL;
             possEdges.clear();
             value = rg.IRandom(0,((int) (sum))); // produce a random number between 0 and highest range
-            for(unsigned int i = 0; i < levelEdges.size(); i++) {
+            /*for(unsigned int i = 0; i < levelEdges.size(); i++) {
                 rWalk = ranges[i];
                 if(rWalk->low <= value && rWalk->high > value && rWalk->assocEdge->usable && !tQueue->exists(rWalk->assocEdge->a->data) && !tQueue->exists(rWalk->assocEdge->b->data)) {
                     edgeWalkPtr=rWalk->assocEdge;
                     edgeWalkPtr->usable = false;
                 }
+            }*/
+
+            i = levelEdges.size() / 2 - 1;
+            if (i%2 != 0)
+                i++;
+            bsint = i;
+            while(true) {
+                //cout << "oh shit " << i << "levelEdges.size " << levelEdges.size() << endl  ;
+                current = ranges[i];
+                if(bsint > 1)
+                    bsint = bsint/2;
+                if(value < current->low){
+                    i -= bsint;
+                }
+                else if(value >= current->high){
+                    i += bsint;
+                }
+                else{
+                    //  We will use this edge
+                    //cout << current->assocEdge->weight << endl;
+                    edgeWalkPtr = current->assocEdge;
+                    edgeWalkPtr->usable = false;
+                    break;
+                }
             }
             if(!edgeWalkPtr)
                 break; 
+            if(tQueue->exists(edgeWalkPtr->a->data) || tQueue->exists(edgeWalkPtr->b->data)){
+                tries++;
+                continue;
+            }
+
             //  We now have an edge that we wish to remove.
             //  Remove the edge
             
