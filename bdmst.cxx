@@ -297,11 +297,11 @@ vector<Edge*> AB_DBMST(Graph *g, int d) {
         } 
         if (cycles % 100 == 0) {
             if(newBest) {
-                updatePheromonesGlobal(g, &best, false);
+                updatePheromonesGlobal(g, &best, true);
                 updateRanges(g);
             } 
             else {
-                updatePheromonesGlobal(g, &best, true);
+                updatePheromonesGlobal(g, &best, false);
                 updateRanges(g);
             }
             newBest = false;
