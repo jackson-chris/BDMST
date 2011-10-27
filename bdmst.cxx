@@ -89,7 +89,7 @@ void compute(Graph* g, int d, processFile p, int instance);
 bool replenish(vector<Edge*> *c, vector<Edge*> *v, const unsigned int & CAN_SIZE);
 Edge* remEdge(vector<Edge*> best);
 void populateVector(Graph* g, vector<Edge*> *v);
-void populateVector_v2(Graph* g, vector<Edge*> *v, int level);
+void fillSameAboveLevel(Graph* g, vector<Edge*> *v, int level);
 void getCandidateSet(vector<Edge*> *v, vector<Edge*> *c, const unsigned int & CAN_SIZE);
 vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsigned int treeCount, int d);
 vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d);
@@ -518,8 +518,15 @@ void populateVector(Graph* g, vector<Edge*> *v) {
         vertWalkPtr = vertWalkPtr->pNextVert;
     }
 }
-
-void populateVector_v2(Graph* g, vector<Edge*> *v, int level) {
+/*
+ *  Input: 
+ *          vector, graph, level
+ *  Idea:
+ *          This function looks at the graph and adds the edges at 
+ *          and above the level indicator to the vector
+ *          
+ */
+void fillSameAboveLevel(Graph* g, vector<Edge*> *v, int level) {
     //  Local Variables
     Vertex* vertWalkPtr;
     vector<Edge*>::iterator ie;
@@ -687,7 +694,7 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d)
         value = 0;
         updates = 0;
         tries = 0;
-        populateVector_v2(gOpt, &levelEdges, levelRemove);
+        fillSameAboveLevel(gOpt, &levelEdges, levelRemove);
         //initialize ranges
         ranges = new Range*[levelEdges.size()];
         for(unsigned int k = 0; k < levelEdges.size(); k++) {
@@ -976,3 +983,58 @@ void move(Graph *g, Ant *a) {
     }
 }
 
+void jolt() {
+    Edge* edgeWalkPtr = NULL, *ePtr = NULL, *eRemoved;
+    vector<Edge*> newTree, possEdges;
+
+    int tries, bsint, i, levelRemove, value, updates, q, iRemove;
+    vector<Edge*>::iterator e;
+    double sum;
+    Range* rWalk, *current;
+    vector<Edge*> levelEdges;
+    Vertex* vertWalkPtr;
+    Range** ranges;
+    int tabu_size = (int)(g->numNodes*.10);
+    Queue* tQueue = new Queue(tabu_size);
+
+
+    //  Get list of all edges at this level or one above it.
+    levelRemove = gOpt->height - 1;    
+    fillSameAboveLevel(gOpt, &levelEdges, levelRemove);
+    //  Jolt the tree
+    for(int l = 0; l < JOLT_BOUND; l++) {
+        //  Pick a random edge from this list to remove
+        iRemove = rg.IRandom(0,((int) (levelEdges.size() - 1)));
+        eRemoved = levelEdges[iRemove];
+        //  Reconnect the subtree
+
+        //
+            //  We now have an edge that we wish to remove.
+            //  Remove the edge
+
+        gOpt->removeEdge(eRemoved->a->data, eRemoved->b->data);
+            //  update tabu list
+        tQueue->push(eRemoved->a->data);
+        tQueue->push(eRemoved->b->data);
+            // find out what vertice we have just cut from.
+        vertWalkPtr = eRemoved->a->depth > eRemoved->b->depth ? g->nodes[eRemoved->a->data] : g->nodes[eRemoved->b->data];
+            // Noww get all possible edges for that vertex
+        for( e = vertWalkPtr->edges.begin(); e < vertWalkPtr->edges.end(); e++) {
+            ePtr = *e;
+            if(gOpt->nodes[ePtr->getOtherSide(vertWalkPtr)->data]->depth <= levelAdd)
+                possEdges.push_back(ePtr);
+        }
+        iAdd = rg.IRandom(0,((int) (possEdges.size() -1 )));
+        ePtr = possEdges.back();
+        while(ePtr->inTree && !possEdges.empty()){
+            possEdges.pop_back();
+            ePtr = possEdges.back();
+        }
+            //cout << "Old Edge" << edgeWalkPtr->a->data << ", " << edgeWalkPtr->b->data << "\t" << edgeWalkPtr->weight << endl;
+            //cout << "New Edge" << ePtr->a->data << ", " << ePtr->b->data << "\t" << ePtr->weight << endl;
+            //cout << "Depth of new a " << ePtr->a->depth << "Depth of new b " << e
+        gOpt->insertEdge(ePtr->a->data, ePtr->b->data, ePtr->weight, ePtr->pLevel);
+
+        populateVector(gOpt,&newTree);
+        return newTree;
+    }
