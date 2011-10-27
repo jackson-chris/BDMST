@@ -1006,33 +1006,25 @@ void jolt() {
         //  Pick a random edge from this list to remove
         iRemove = rg.IRandom(0,((int) (levelEdges.size() - 1)));
         eRemoved = levelEdges[iRemove];
-        //  Reconnect the subtree
-
-        //
-            //  We now have an edge that we wish to remove.
-            //  Remove the edge
-
         gOpt->removeEdge(eRemoved->a->data, eRemoved->b->data);
-            //  update tabu list
+        //  update tabu list
         tQueue->push(eRemoved->a->data);
         tQueue->push(eRemoved->b->data);
-            // find out what vertice we have just cut from.
+        //  Reconnect the sub tree
+        // find out what vertice we have just cut from.
         vertWalkPtr = eRemoved->a->depth > eRemoved->b->depth ? g->nodes[eRemoved->a->data] : g->nodes[eRemoved->b->data];
-            // Noww get all possible edges for that vertex
+        // Noww get all possible edges for that vertex
         for( e = vertWalkPtr->edges.begin(); e < vertWalkPtr->edges.end(); e++) {
             ePtr = *e;
             if(gOpt->nodes[ePtr->getOtherSide(vertWalkPtr)->data]->depth <= levelAdd)
                 possEdges.push_back(ePtr);
         }
+        do {
         iAdd = rg.IRandom(0,((int) (possEdges.size() -1 )));
-        ePtr = possEdges.back();
-        while(ePtr->inTree && !possEdges.empty()){
-            possEdges.pop_back();
-            ePtr = possEdges.back();
-        }
-            //cout << "Old Edge" << edgeWalkPtr->a->data << ", " << edgeWalkPtr->b->data << "\t" << edgeWalkPtr->weight << endl;
-            //cout << "New Edge" << ePtr->a->data << ", " << ePtr->b->data << "\t" << ePtr->weight << endl;
-            //cout << "Depth of new a " << ePtr->a->depth << "Depth of new b " << e
+        ePtr = possEdges[iAdd];
+        possEdges.erase(iAdd);
+        } while (ePtr->inTree && !possEdges.empty());
+        //  We now have an edge we can add, so add it
         gOpt->insertEdge(ePtr->a->data, ePtr->b->data, ePtr->weight, ePtr->pLevel);
 
         populateVector(gOpt,&newTree);
