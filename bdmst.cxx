@@ -503,6 +503,10 @@ void populateVector(Graph* g, vector<Edge*> *v) {
     vector<Edge*>::iterator ie;
     Edge* edgeWalkPtr;
     //  Logic
+    
+    //  Ensure the vector is empty before we begin
+    if(!v->empty())
+        v->clear();
     vertWalkPtr = g->getFirst();
     while (vertWalkPtr) {
         vertWalkPtr->treeDegree = 0;
