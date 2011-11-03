@@ -95,6 +95,7 @@ vector<Edge*> opt_one_edge_v1(Graph* g, Graph* gOpt, vector<Edge*> *tree, unsign
 vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d);
 vector<Edge*> buildTree(Graph *g, int d);
 void updateRanges(Graph *g);
+void jolt(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d);
 
 int main( int argc, char *argv[]) {
     //  Process input from command line
@@ -678,7 +679,7 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d)
     vector<Edge*>::iterator e;
     double sum;
     int value, updates;
-    Range* rWalk, *current;
+    Range *current;
     int q; 
     vector<Edge*> levelEdges;
     Vertex* vertWalkPtr;
@@ -728,7 +729,7 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d)
             edgeWalkPtr->usable = true;
         }
         //cout << levelEdges.size() << endl;
-        while (tries < ONE_EDGE_OPT_MAX && updates < 30) {
+        while (tries < ONE_EDGE_OPT_MAX ) { //) && updates < 30) {
             //  Pick an edge to remove at random favoring edges with low pheremones
             //  First we determine the ranges for each edge
             edgeWalkPtr = NULL;
@@ -805,14 +806,20 @@ vector<Edge*> opt_one_edge_v2(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d)
                 cout << "we improved.\n";
                 gOpt->insertEdge(ePtr->a->data, ePtr->b->data, ePtr->weight, ePtr->pLevel);
                 updates++;
+                tries = 0;
                 break;
             }
             else {
                 gOpt->insertEdge(edgeWalkPtr->a->data, edgeWalkPtr->b->data, edgeWalkPtr->weight, edgeWalkPtr->pLevel);
                 tries++;
-                //cout << "we failed.\n";
+                /*
+                if(tries % 20 == 0) {
+                    populateVector(gOpt,tree);
+                    jolt(g,gOpt,tree,d);
+                    tries = 0;
+                }
+                */
             }
-            //cout << "try number: " << tries << endl;
         }
         //  reset items
         for(unsigned int k = 0; k < levelEdges.size(); k++) {
@@ -983,17 +990,15 @@ void move(Graph *g, Ant *a) {
     }
 }
 
-void jolt() {
-    Edge* edgeWalkPtr = NULL, *ePtr = NULL, *eRemoved;
-    vector<Edge*> newTree, possEdges;
-
-    int tries, bsint, i, levelRemove, value, updates, q, iRemove;
-    vector<Edge*>::iterator e;
-    double sum;
-    Range* rWalk, *current;
+void jolt(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d) {
+    cerr << "We called jolt." << endl;
+    int JOLT_BOUND = g->numNodes / 10;
+    Edge *ePtr = NULL, *eRemoved;
+    vector<Edge*> possEdges;
+    int levelRemove, iRemove, iAdd;
+    vector<Edge*>::iterator e, eAdd;
     vector<Edge*> levelEdges;
     Vertex* vertWalkPtr;
-    Range** ranges;
     int tabu_size = (int)(g->numNodes*.10);
     Queue* tQueue = new Queue(tabu_size);
 
@@ -1016,17 +1021,17 @@ void jolt() {
         // Noww get all possible edges for that vertex
         for( e = vertWalkPtr->edges.begin(); e < vertWalkPtr->edges.end(); e++) {
             ePtr = *e;
-            if(gOpt->nodes[ePtr->getOtherSide(vertWalkPtr)->data]->depth <= levelAdd)
+            if(gOpt->nodes[ePtr->getOtherSide(vertWalkPtr)->data]->depth <= levelRemove)
                 possEdges.push_back(ePtr);
         }
         do {
         iAdd = rg.IRandom(0,((int) (possEdges.size() -1 )));
         ePtr = possEdges[iAdd];
-        possEdges.erase(iAdd);
+        eAdd = possEdges.begin() + iAdd;
+        possEdges.erase(eAdd);
         } while (ePtr->inTree && !possEdges.empty());
         //  We now have an edge we can add, so add it
         gOpt->insertEdge(ePtr->a->data, ePtr->b->data, ePtr->weight, ePtr->pLevel);
-
-        populateVector(gOpt,&newTree);
-        return newTree;
     }
+    populateVector(gOpt,tree);
+}
