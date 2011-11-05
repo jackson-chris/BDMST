@@ -931,7 +931,14 @@ void move(Graph *g, Ant *a) {
         }
     }
 }
+/*
+Jolt is not working properly it is introducing duplicate edges into the tree, and possibly causing loops(?).
 
+I think it has something to do with the inTree flag check. I don't think this field is being updated
+properly and thus causing the problem. I currently have the call to this function commented out so it will
+run properly.
+
+*/
 void jolt(Graph* g, Graph* gOpt, vector<Edge*> *tree, int d) {
     cerr << "We called jolt." << endl;
     int JOLT_BOUND = g->numNodes / 10;
