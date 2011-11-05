@@ -876,45 +876,32 @@ bool replenish(vector<Edge*> *c, vector<Edge*> *v, const unsigned int & CAN_SIZE
 
 void move(Graph *g, Ant *a) {
     //cerr << "in move\n";
-    Vertex* vertWalkPtr;
-    Vertex* vDest;
+    Vertex *vertWalkPtr, *vDest;
     vertWalkPtr = a->location;
     Edge* edgeWalkPtr = NULL;
-    int numMoves = 0;
-    int index = vertWalkPtr->data - 1;
-    int size = 0, initialI = 0;
+    int numMoves = 0, index = vertWalkPtr->data - 1, value, high, low = 0, mid, i;
     bool alreadyVisited;
     vector<Edge*>::iterator e;
     vector<Range> *edges = vert_ranges[index];
     double sum = edges->back().high;
-    int value;
-    int i = 0, bsint = 0;
     Range* current;
-    size = edges->size();
-    //cerr << "moving ant on node: " << index << ", sum is: " << sum << ", size is: " << size <<endl;
-    initialI = size / 2 - 1;
+    
     while (numMoves < 5) {
         //  Select an edge at random and proportional to its pheremone level
-        value = rg.IRandom(0,((int) (sum)));
-        i = initialI;
-        if(i%2 != 0)
-            i++;
-        bsint = i;
-        while(true){
-            current = &(*edges)[i];
-            bsint -= bsint/2;
-            if(value < current->low){
-                i -= bsint;
+        value = rg.IRandom(low,((int) (sum))); // produce a random number between 0 and highest range
+        high = edges->size();
+        while(high != low + 1) {
+            mid = (low + high) / 2;
+            current = &(*edges)[mid];
+            if(value < current->high) {
+                high = mid;
+            } else {
+                low = mid;
             }
-            else if(value >= current->high){
-                i += bsint;
-            }
-            else{
-                //  We will use this edge
-                //    cout << current->assocEdge->weight << endl;
-                edgeWalkPtr = current->assocEdge;
-                break;
-            } } 
+        }
+        i = high;
+        current = &(*edges)[i];
+        edgeWalkPtr = current->assocEdge;
         //  Check to see if the ant is stuck
         if (a->nonMove > 4) {
             a->vQueue->reset();
