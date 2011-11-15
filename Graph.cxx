@@ -236,6 +236,53 @@ int Graph::insertEdge(int fromKey, int toKey, double weight, double level) {
     newPtr->weight = weight;
     newPtr->pLevel = level;
     newPtr->usable = true;
+    newPtr->linked = NULL;
+    newPtr->inTree = false;
+    if(!newPtr) {
+        return (-1);
+    }
+    //  Find source vertex
+    vertFromPtr = first;
+    while(vertFromPtr && fromKey > (vertFromPtr->data)) {
+        vertFromPtr = vertFromPtr->pNextVert;
+    }
+    if(!vertFromPtr || fromKey != (vertFromPtr->data)) {
+        return (-2);
+    }
+    //  Find destination vertex
+    vertToPtr = first;
+    while(vertToPtr && toKey > (vertToPtr->data)) {
+        vertToPtr = vertToPtr->pNextVert;
+    }
+    if(!vertToPtr || toKey != (vertToPtr->data)) {
+        return (-3);
+    }
+    //  Found verticies. Make edge.
+    ++vertFromPtr->degree;
+    ++vertToPtr->degree;
+    newPtr->b=vertToPtr;
+    newPtr->a=vertFromPtr;
+    //  Add edges to each adjacency list
+    vertToPtr->edges.push_back(newPtr);
+    vertFromPtr->edges.push_back(newPtr);
+    return 1;
+}
+
+/*
+ Insert an edge between two verticies.
+ */
+int Graph::insertEdgeOpt(Edge* orig) {
+    Edge *newPtr;
+    int fromKey = orig->a->data;
+    int toKey = orig->b->data;
+    Vertex *vertFromPtr;
+    Vertex *vertToPtr;
+    
+    newPtr = new Edge;
+    newPtr->weight = orig->weight;
+    newPtr->pLevel = orig->pLevel;
+    newPtr->usable = true;
+    newPtr->linked = orig;
     newPtr->inTree = false;
     if(!newPtr) {
         return (-1);
@@ -303,6 +350,9 @@ double Graph::insertEdge(int fromKey, int toKey) {
     ++vertFromPtr->degree;
     ++vertToPtr->degree;
     newPtr->b=vertToPtr;
+    newPtr->linked = NULL;
+    newPtr->inTree = false;
+    newPtr->usable = true;
     newPtr->a=vertFromPtr;
     //  Add edges to each adjacency list
     vertToPtr->edges.push_back(newPtr);

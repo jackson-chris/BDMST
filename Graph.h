@@ -68,6 +68,7 @@ class Edge {
 public:
     Vertex *a;
     Vertex *b;
+    Edge *linked;
     double pUpdatesNeeded;
     bool inTree;
     bool usable;
@@ -115,6 +116,7 @@ public:
     Vertex* BFS_2(Vertex* pVert);
     int testDiameter();
 	bool isConnected();
+    int insertEdgeOpt(Edge*);
 
 };
 
